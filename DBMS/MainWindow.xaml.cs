@@ -402,17 +402,20 @@ namespace DBMS
 
         private void ExecuteQueryText(string query)
         {
+            DateTime start = DateTime.Now;
             try
             {
                 CommandInterpreter ci = new CommandInterpreter();
                 UICommand ui = ci.InterpretCommand(query);
+                
                 MessageBox.Show(ui.ToString());
             } 
             catch(Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-            
+            TimeSpan ellapsed = DateTime.Now.Subtract(start);
+            statusMessage.Text = string.Format("Execution duration: {0} ms", ellapsed.Milliseconds);
         }
     }
 }
