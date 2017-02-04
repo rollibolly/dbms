@@ -343,7 +343,16 @@ namespace DBMS
             "INDEX",
             "WHERE",
             "TABLE",
-            "DATABASE"            
+            "DATABASE", 
+            "CREATE",  
+            "PRIMARY",
+            "KEY",
+            "UNIQUE",
+            "NOT",
+            "NULL",
+            "INTEGER",
+            "STRING",
+            "BOOLEAN"         
         };
 
         private void textBoxSqlEditor_TextChanged(object sender, TextChangedEventArgs e)
@@ -354,7 +363,7 @@ namespace DBMS
             {
                 if ( Keywords.Contains( wordRange.Text.ToUpper()))
                 {
-                    wordRange.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Red);
+                    wordRange.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Blue);
                 }
                 else
                 {
@@ -387,11 +396,17 @@ namespace DBMS
 
         private void ExecuteQueryText(string query)
         {
+            try
+            {
+                CommandInterpreter ci = new CommandInterpreter();
+                UICommand ui = ci.InterpretCommand(query);
+                MessageBox.Show(ui.ToString());
+            } 
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
             
-            CommandInterpreter ci = new CommandInterpreter();
-            UICommand ui = ci.InterpretCommand(query);
-
-            MessageBox.Show(ui.ToString());
         }
     }
 }

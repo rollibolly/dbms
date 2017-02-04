@@ -37,7 +37,7 @@ namespace Utilities
                 Command.ToString(),
                 Entity.ToString(),
                 string.Join(", ", TableNames),
-                string.Join(", ", Columns.Select(r => r.Name)));            
+                string.Join(", ", Columns.Select(r => string.Format("Name: {0} | Type: {1} | Is PK: {2} | Is Unique: {3} | Is Null: {4}", r.Name, r.DataType.ToString(), r.IsPrimaryKey, r.IsUnique, r.IsNull))));            
 
             return str;
         }
