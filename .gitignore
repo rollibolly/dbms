@@ -33,10 +33,6 @@ DBMS/obj/Debug/WindowCreateIndex.g.i.cs
 DBMS/obj/Debug/WindowCreateTable.baml
 DBMS/obj/Debug/WindowResultView.g.cs
 DBMS/obj/Debug/WindowResultView.g.i.cs
-KVDB_bin/bdb.properties
-KVDB_bin/libdb_dotnet62.XML
-KVDB_bin/log4j.xml
-KVDB_bin/start_server.bat
 Revisal/App.config
 Revisal/Program.cs
 Revisal/Properties/AssemblyInfo.cs
