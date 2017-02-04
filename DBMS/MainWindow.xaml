@@ -1,0 +1,22 @@
+﻿<Window x:Class="DBMS.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DBMS"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="635" Width="1009">
+    <Grid>
+        <TreeView x:Name="treeView" 
+                  HorizontalAlignment="Left" 
+                  Height="475" 
+                  Margin="10,67,0,0" 
+                  VerticalAlignment="Top" 
+                  Width="217" SelectedItemChanged="treeView_SelectedItemChanged" ContextMenuOpening="treeView_ContextMenuOpening"
+            >
+
+        </TreeView>
+        <Button x:Name="btnCreateDatabase" Content="Create Database" HorizontalAlignment="Left" Margin="10,31,0,0" VerticalAlignment="Top" Width="96" Click="btnCreateDatabase_Click"/>
+
+    </Grid>
+</Window>

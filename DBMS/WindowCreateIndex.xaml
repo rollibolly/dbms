@@ -1,0 +1,30 @@
+﻿<Window x:Class="DBMS.WindowCreateIndex"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DBMS"
+        mc:Ignorable="d"
+        Title="Create Index" Height="355.297" Width="300">
+    <Grid>
+        <Label x:Name="labelTableName" Content="TableName" HorizontalAlignment="Left" Margin="22,29,0,0" VerticalAlignment="Top" Width="234"/>
+        <ListBox x:Name="listBoxClumns" HorizontalAlignment="Left" Height="175" Margin="22,58,0,0" VerticalAlignment="Top" Width="234">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"></ColumnDefinition>
+                            <ColumnDefinition Width="Auto"></ColumnDefinition>
+                            <ColumnDefinition Width="100"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding Name}" Grid.Column="0"></TextBlock>
+                        <GridSplitter ResizeDirection="Columns" Grid.Column="1" Height="Auto" Width="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0"/>
+                        <TextBlock Text="{Binding DataType}" Grid.Column="2"></TextBlock>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Button x:Name="btnCreateIndex" Content="Create Index" HorizontalAlignment="Left" Margin="181,274,0,0" VerticalAlignment="Top" Width="75" Click="btnCreateIndex_Click"/>
+
+    </Grid>
+</Window>
