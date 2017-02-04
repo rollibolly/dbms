@@ -17,6 +17,8 @@ using DBMS.KVManagement;
 using DBMS.Utilities;
 using DBMS.Models.DBStructure;
 using System.Collections.ObjectModel;
+using System.Data;
+using System.Text.RegularExpressions;
 
 namespace DBMS
 {
@@ -207,17 +209,52 @@ namespace DBMS
             }
         }
 
+        private DataTable resultTable = new DataTable();
         private void SelectTopItem_Click(object sender, RoutedEventArgs e)
-        {
+        {                        
             KVManagement.DatabaseMgr mgr = new DatabaseMgr(String.Format("{0}\\{1}", SelectedDatabase.FolderName, SelectedTable.FileName));
             mgr.Open();
             DBMSResult res = mgr.GetTopN<string>(10);
             if (res.Success) {
-                Dictionary<object, string> resultSet = res.Data as Dictionary<object, string>;
-                WindowResultView window = new DBMS.WindowResultView(SelectedTable, resultSet);
-                window.Show();
+                FillResultViewGrid(SelectedTable, res.Data as Dictionary<object, string>);               
             }
+            
             mgr.Close();
+        }
+
+        private void FillResultViewGrid(Models.DBStructure.Table tableSchema, Dictionary<object, string> resultSet)
+        {
+            dataGridResult.Items.Clear();
+            dataGridResult.Columns.Clear();
+
+            resultTable = new DataTable();
+            int i = 0;
+            if (tableSchema.PrimaryKey == null)
+            {
+                DataGridTextColumn pkCol = new DataGridTextColumn();
+                pkCol.Header = "Generated PK";
+                pkCol.Binding = new Binding(string.Format("[{0}]", i));
+                dataGridResult.Columns.Add(pkCol);
+                i++;
+            }
+
+            foreach (var item in tableSchema.Columns)
+            {
+                DataGridTextColumn col = new DataGridTextColumn();
+                col.Header = item.Name;
+                col.Binding = new Binding(string.Format("[{0}]", i));
+                dataGridResult.Columns.Add(col);
+                i++;
+            }            
+
+            foreach (var resRow in resultSet)
+            {
+                List<object> row = new List<object>();
+                row.Add(resRow.Key);
+                List<string> columnValues = resRow.Value.Split('|').ToList();
+                row = row.Concat(columnValues).ToList();
+                dataGridResult.Items.Add(row.ToArray());                
+            }
         }
 
         private void CreateIndexItem_Click(object sender, RoutedEventArgs e)
@@ -269,6 +306,87 @@ namespace DBMS
                     FillTreeView();
                     break;
             }
+        }
+        public static IEnumerable<TextRange> GetAllWordRanges(FlowDocument document)
+        {
+            string pattern = @"[^\W\d](\w|[-']{1,2}(?=\w))*";
+            TextPointer pointer = document.ContentStart;
+            while (pointer != null)
+            {
+                if (pointer.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
+                {
+                    string textRun = pointer.GetTextInRun(LogicalDirection.Forward);
+                    MatchCollection matches = Regex.Matches(textRun, pattern);
+                    foreach (Match match in matches)
+                    {
+                        int startIndex = match.Index;
+                        int length = match.Length;
+                        TextPointer start = pointer.GetPositionAtOffset(startIndex);
+                        TextPointer end = start.GetPositionAtOffset(length);
+                        yield return new TextRange(start, end);
+                    }
+                }
+
+                pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
+            }
+        }
+
+        private List<string> Keywords = new List<string>()
+        {
+            "SELECT",
+            "FROM",
+            "INTO",
+            "INSERT",
+            "DELETE",
+            "UPDATE",
+            "INDEX",
+            "WHERE",
+            "TABLE",
+            "DATABASE"            
+        };
+
+        private void textBoxSqlEditor_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            IEnumerable<TextRange> wordRanges = GetAllWordRanges(textBoxSqlEditor.Document);
+            
+            foreach (TextRange wordRange in wordRanges)
+            {
+                if ( Keywords.Contains( wordRange.Text.ToUpper()))
+                {
+                    wordRange.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Red);
+                }
+                else
+                {
+                    wordRange.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Black);
+                }
+            }        
+        }
+
+        private void btnExecuteQuery_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(textBoxSqlEditor.Selection.Text))
+            {
+                textBoxSqlEditor.SelectAll();
+            }
+            ExecuteQueryText(textBoxSqlEditor.Selection.Text);
+            
+        }
+
+        private void textBoxSqlEditor_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F5)
+            {
+                if (string.IsNullOrEmpty(textBoxSqlEditor.Selection.Text))
+                {
+                    textBoxSqlEditor.SelectAll();
+                }
+                ExecuteQueryText(textBoxSqlEditor.Selection.Text);
+            }
+        }
+
+        private void ExecuteQueryText(string query)
+        {
+            MessageBox.Show(query);
         }
     }
 }

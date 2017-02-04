@@ -5,11 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DBMS"
         mc:Ignorable="d"
-        Title="WindowInsertIntoTable" Height="300" Width="530.72">
+        Title="Insert into table" Height="432.839" Width="530.72">
     <Grid>
-        <DataGrid x:Name="dataGridInsertTable" HorizontalAlignment="Left" Margin="10,34,0,0" VerticalAlignment="Top" Height="135" Width="503" AutoGenerateColumns="False" ItemsSource="{Binding}"/>
-        <Button x:Name="btnAddRowForGridInsertTable" Content="Add row" HorizontalAlignment="Left" Margin="331,239,0,0" VerticalAlignment="Top" Width="75" Click="btnAddRowForGridInsertTable_Click"/>
-        <Button x:Name="btnInsertRows" Content="Insert" HorizontalAlignment="Left" Margin="438,239,0,0" VerticalAlignment="Top" Width="75" Click="btnInsertRows_Click"/>
+        <DataGrid x:Name="dataGridInsertTable" Margin="10,34,10,204" AutoGenerateColumns="False" ItemsSource="{Binding}"/>
+        <Button x:Name="btnInsertRows" Content="Insert" Margin="0,0,10,10" Click="btnInsertRows_Click" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75"/>
+        <DataGrid x:Name="dataGridInsertedRecords" Margin="10,0,10,45" Height="116" VerticalAlignment="Bottom"/>
+        <Label x:Name="label" Content="Inserted records:" HorizontalAlignment="Left" Margin="10,0,0,166" VerticalAlignment="Bottom"/>
+        <Label x:Name="label1" Content="Values to insert:" HorizontalAlignment="Left" Margin="10,3,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>

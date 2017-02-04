@@ -9,22 +9,19 @@
     <Grid>
         <TreeView x:Name="treeView" 
                   HorizontalAlignment="Left" 
-                  Height="646" 
-                  Margin="10,67,0,0" 
-                  VerticalAlignment="Top" 
+                  Margin="10,67,0,48" 
                   Width="217" SelectedItemChanged="treeView_SelectedItemChanged" ContextMenuOpening="treeView_ContextMenuOpening"
-            >
-
-        </TreeView>
+            />
         <Button x:Name="btnCreateDatabase" Content="Create Database" HorizontalAlignment="Left" Margin="10,31,0,0" VerticalAlignment="Top" Width="96" Click="btnCreateDatabase_Click"/>
-        <RichTextBox x:Name="richTextBox" HorizontalAlignment="Left" Height="418" Margin="268,67,0,0" VerticalAlignment="Top" Width="697">
+        <RichTextBox x:Name="textBoxSqlEditor" Margin="268,67,72,0" Height="387" VerticalAlignment="Top" FontFamily="Courier New" FontSize="14" TextChanged="textBoxSqlEditor_TextChanged" KeyUp="textBoxSqlEditor_KeyUp">
             <FlowDocument>
                 <Paragraph>
                     <Run Text="RichTextBox"/>
                 </Paragraph>
             </FlowDocument>
         </RichTextBox>
-        <DataGrid x:Name="dataGrid" HorizontalAlignment="Left" Margin="268,504,0,0" VerticalAlignment="Top" Height="209" Width="697"/>
+        <DataGrid x:Name="dataGridResult" AutoGenerateColumns="False" Margin="268,504,72,48"/>
+        <Button x:Name="btnExecuteQuery" Content="Execute" Margin="0,459,72,0" VerticalAlignment="Top" Click="btnExecuteQuery_Click" HorizontalAlignment="Right" Width="75"/>
 
     </Grid>
 </Window>

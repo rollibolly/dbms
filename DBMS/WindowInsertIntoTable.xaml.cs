@@ -2,6 +2,7 @@
 using DBMS.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Linq;
@@ -25,15 +26,42 @@ namespace DBMS
     {
         private MainWindow parent;
         private DataTable table;
+
+        public class KV
+        {
+            public string Key { get; set; }
+            public string Value { get; set; }
+            public KV() { }
+            public KV(string key, string value)
+            {
+                Key = key;
+                Value = value;
+            }
+        }
+
+        private ObservableCollection<KV> insertedRecords;        
         public WindowInsertIntoTable(MainWindow parent)
         {
             InitializeComponent();
+            insertedRecords = new ObservableCollection<KV>();            
             this.parent = parent;
             InitGrid();            
         }        
-
+        
         private void InitGrid()
         {
+            dataGridInsertedRecords.AutoGenerateColumns = false;
+            DataGridTextColumn keyColumn = new DataGridTextColumn();
+            keyColumn.Header = "KEY";
+            keyColumn.Binding = new Binding("Key");
+            dataGridInsertedRecords.Columns.Add(keyColumn);
+            DataGridTextColumn valueColumn = new DataGridTextColumn();
+            valueColumn.Header = "VALUE";
+            valueColumn.Binding = new Binding("Value");
+            dataGridInsertedRecords.Columns.Add(valueColumn);
+
+            dataGridInsertedRecords.ItemsSource = insertedRecords;
+
             table = new DataTable();
             foreach (var item in parent.SelectedTable.Columns)
             {
@@ -53,15 +81,13 @@ namespace DBMS
             
         }
 
-        private void btnAddRowForGridInsertTable_Click(object sender, RoutedEventArgs e)
-        {
-            table.Rows.Add(table.NewRow());
-        }
-
         private void btnInsertRows_Click(object sender, RoutedEventArgs e)
         {
+            insertedRecords.Clear();
             DatabaseMgr mgr = new DatabaseMgr(String.Format("{0}\\{1}",parent.SelectedDatabase.FolderName,parent.SelectedTable.FileName));
             DBMSResult res = mgr.Open();
+            string keyStr = null;
+            string valuesStr = null;
             if (!res.Success)
             {
                 MessageBox.Show(res.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -82,13 +108,15 @@ namespace DBMS
                             values.Add(row.ItemArray[i] as string);
                         }
                     }
-
-                    res = mgr.Put(row[parent.SelectedTable.PrimaryKey.Name] as string, String.Join("|", values));
+                    keyStr = row[parent.SelectedTable.PrimaryKey.Name] as string;
+                    valuesStr = String.Join("|", values);
+                    res = mgr.Put(keyStr, valuesStr);
                     if (!res.Success)
                     {
                         MessageBox.Show(res.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
-                    }
+                    }                    
+                    insertedRecords.Add(new KV(keyStr, valuesStr));
                 }
             }
             else
@@ -101,15 +129,20 @@ namespace DBMS
                     {
                         values.Add(row.ItemArray[i] as string);
                     }
-
-                    res = mgr.Put(Guid.NewGuid().ToString(), String.Join("|", values));
+                    keyStr = Guid.NewGuid().ToString();
+                    valuesStr = String.Join("|", values);
+                    res = mgr.Put(keyStr, valuesStr);
                     if (!res.Success)
                     {
                         MessageBox.Show(res.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
+                    insertedRecords.Add(new KV(keyStr, valuesStr));
                 }
             }
+
+            table.Clear();
+
             res = mgr.Close();
             if (!res.Success)
             {
