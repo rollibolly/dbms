@@ -120,6 +120,40 @@ namespace Utilities
             return command;
         }
 
+        public UICommand InsertQuery(string insertString)
+        {
+            UICommand command = new UICommand();
+
+            command.Command = CommandType.INSERT;
+
+            IEnumerable<string> inserts = insertString.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            string firstInsert = inserts.First();
+            int tableIndex = firstInsert.IndexOf("INSERT INTO ") + "INSERT INTO ".Length;
+
+            command.TableNames = new List<string>();
+            string table = firstInsert.Substring(tableIndex, firstInsert.IndexOf("(", tableIndex) - tableIndex);
+
+            command.TableNames.Add(table);
+
+            var regex = new System.Text.RegularExpressions.Regex(@"\(([^)]+)\)", System.Text.RegularExpressions.RegexOptions.Compiled);
+            string[] columns = regex.Matches(firstInsert)[0].Value.Split(new char[] { ',', ')', '(' }, StringSplitOptions.RemoveEmptyEntries);
+
+            IEnumerable<string> values = inserts.Select(sql => regex.Matches(sql)[1].Value);
+            string[] vals = values.First().Split(new char[] { ',', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
+
+            command.Columns = new List<TableColumn>();
+
+            for (int i = 0; i < columns.Length; i++)
+            {
+                TableColumn column = new TableColumn();
+                column.Name = columns[i].ToString();
+                column.Value = vals[i].ToString();
+                command.Columns.Add(column);
+            }
+
+            return command;
+        }
+
         public UICommand InterpretCommand(string sqltext)
         {
             UICommand command = new UICommand();
@@ -134,7 +168,7 @@ namespace Utilities
                     command = SelectQuery(sql: sqltext);
                     break;
                 case "INSERT":
-                   // InsertQuery(insertString: sqltext);
+                    command = InsertQuery(insertString: sqltext);
                     break;
                 case "DELETE":
 

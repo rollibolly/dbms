@@ -89,6 +89,8 @@ namespace DBMS.Models.DBStructure
         public bool IsPrimaryKey { get; set; }
         [DataMember]
         public bool IsUnique { get; set; }
+        [IgnoreDataMember]
+        public string Value { get; set; }
         [DataMember]
         private string refTable { get; set; }
         [DataMember]
