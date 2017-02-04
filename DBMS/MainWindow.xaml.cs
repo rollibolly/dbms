@@ -19,6 +19,7 @@ using DBMS.Models.DBStructure;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Text.RegularExpressions;
+using Utilities;
 
 namespace DBMS
 {
@@ -31,7 +32,7 @@ namespace DBMS
         public DBMSDatabase SelectedDatabase { get; set; }
         public Models.DBStructure.Table SelectedTable { get; set; }
         public Models.DBStructure.TableColumn SelectedColumn { get; set; }
-        public EntityType SelectedEntityType { get; set; }
+        public Models.DBStructure.EntityType SelectedEntityType { get; set; }
 
         public MainWindow()
         {
@@ -132,31 +133,31 @@ namespace DBMS
             TreeViewItem parent = null;
             switch (Mappings.MapObject(selectedItem.Tag))
             {
-                case EntityType.DATABASE:
+                case Models.DBStructure.EntityType.DATABASE:
                     SelectedDatabase = selectedItem.Tag as DBMSDatabase;
                     SelectedTable = null;
                     SelectedColumn = null;
-                    SelectedEntityType = EntityType.DATABASE;
+                    SelectedEntityType = Models.DBStructure.EntityType.DATABASE;
                     return;
-                case EntityType.TABLE_LIST:
+                case Models.DBStructure.EntityType.TABLE_LIST:
                     parent = selectedItem.Parent as TreeViewItem;
                     SelectedDatabase = parent.Tag as DBMSDatabase;
                     SelectedTable = null;
                     SelectedColumn = null;                    
-                    SelectedEntityType = EntityType.TABLE_LIST;
+                    SelectedEntityType = Models.DBStructure.EntityType.TABLE_LIST;
                     return;
-                case EntityType.TABLE:
+                case Models.DBStructure.EntityType.TABLE:
                     parent = (selectedItem.Parent as TreeViewItem).Parent as TreeViewItem;
                     SelectedDatabase = parent.Tag as DBMSDatabase;
                     SelectedTable = selectedItem.Tag as Models.DBStructure.Table;
                     SelectedColumn = null;
-                    SelectedEntityType = EntityType.TABLE;
+                    SelectedEntityType = Models.DBStructure.EntityType.TABLE;
                     return;
-                case EntityType.COLUMN_LIST:
-                    SelectedEntityType = EntityType.COLUMN_LIST;
+                case Models.DBStructure.EntityType.COLUMN_LIST:
+                    SelectedEntityType = Models.DBStructure.EntityType.COLUMN_LIST;
                     return;
-                case EntityType.COLUMN:
-                    SelectedEntityType = EntityType.COLUMN;
+                case Models.DBStructure.EntityType.COLUMN:
+                    SelectedEntityType = Models.DBStructure.EntityType.COLUMN;
                     return;
             }                        
         }        
@@ -168,21 +169,21 @@ namespace DBMS
                 ContextMenu ctx = new ContextMenu();
                 switch (SelectedEntityType)
                 {
-                    case EntityType.DATABASE:
+                    case Models.DBStructure.EntityType.DATABASE:
                         MenuItem dropItem = new MenuItem();
                         dropItem.Header = String.Format("Drop database {0}", SelectedDatabase.DatabaseName);
                         dropItem.Click += DropEntityItem_Click;
                         ctx.Items.Add(dropItem);
                         ctx.IsOpen = true;
                         break;
-                    case EntityType.TABLE_LIST:
+                    case Models.DBStructure.EntityType.TABLE_LIST:
                         MenuItem createItem = new MenuItem();
                         createItem.Header = "Create TABLE";
                         createItem.Click += CreateTableItem_Click;
                         ctx.Items.Add(createItem);
                         ctx.IsOpen = true;
                         break;
-                    case EntityType.TABLE:
+                    case Models.DBStructure.EntityType.TABLE:
                         MenuItem dropTableItem = new MenuItem();
                         dropTableItem.Header = String.Format("Drop table {0}", SelectedTable.TableName);
                         dropTableItem.Click += DropEntityItem_Click;
@@ -295,12 +296,12 @@ namespace DBMS
         {
             switch (SelectedEntityType)
             {
-                case EntityType.DATABASE:
+                case Models.DBStructure.EntityType.DATABASE:
                     CurrentDatabases.Remove(SelectedDatabase);
                     SchemaSerializer.SaveDatabases(CurrentDatabases);
                     FillTreeView();
                     break;
-                case EntityType.TABLE:
+                case Models.DBStructure.EntityType.TABLE:
                     CurrentDatabases.FirstOrDefault(r => r.DatabaseName == SelectedDatabase.DisplayName).Tables.Remove(SelectedTable);
                     SchemaSerializer.SaveDatabases(CurrentDatabases);
                     FillTreeView();
@@ -386,7 +387,11 @@ namespace DBMS
 
         private void ExecuteQueryText(string query)
         {
-            MessageBox.Show(query);
+            
+            CommandInterpreter ci = new CommandInterpreter();
+            UICommand ui = ci.InterpretCommand(query);
+
+            MessageBox.Show(ui.ToString());
         }
     }
 }

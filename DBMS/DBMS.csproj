@@ -67,8 +67,10 @@
     <Compile Include="Models\DBStructure\DBMSEntity.cs" />
     <Compile Include="Models\DBStructure\Index.cs" />
     <Compile Include="Models\DBStructure\Table.cs" />
+    <Compile Include="Utilities\CommandInterpreter.cs" />
     <Compile Include="Utilities\DBMSResult.cs" />
     <Compile Include="Utilities\SchemaSerializer.cs" />
+    <Compile Include="Utilities\UICommand.cs" />
     <Compile Include="WindowCreateDatabase.xaml.cs">
       <DependentUpon>WindowCreateDatabase.xaml</DependentUpon>
     </Compile>
