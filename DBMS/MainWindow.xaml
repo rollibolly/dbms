@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DBMS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="792.404" Width="1045.325">
+        Title="MainWindow" Height="803.167" Width="1045.325">
     <Grid>
         <TreeView x:Name="treeView" 
                   HorizontalAlignment="Left" 
@@ -16,12 +16,13 @@
         <RichTextBox x:Name="textBoxSqlEditor" Margin="268,67,72,0" Height="387" VerticalAlignment="Top" FontFamily="Courier New" FontSize="14" TextChanged="textBoxSqlEditor_TextChanged" KeyUp="textBoxSqlEditor_KeyUp">
             <FlowDocument>
                 <Paragraph>
-                    <Run Text="RichTextBox"/>
+                    <Run Text=""/>
                 </Paragraph>
             </FlowDocument>
         </RichTextBox>
         <DataGrid x:Name="dataGridResult" AutoGenerateColumns="False" Margin="268,504,72,48"/>
         <Button x:Name="btnExecuteQuery" Content="Execute" Margin="0,459,72,0" VerticalAlignment="Top" Click="btnExecuteQuery_Click" HorizontalAlignment="Right" Width="75"/>
+        <StatusBar x:Name ="statusBar" HorizontalAlignment="Left" Height="29" Margin="0,733,0,0" VerticalAlignment="Top" Width="1027"/>
 
     </Grid>
 </Window>

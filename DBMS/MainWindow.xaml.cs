@@ -349,12 +349,14 @@ namespace DBMS
             "KEY",
             "UNIQUE",
             "NOT",
-            "NULL",
+            "NULL"                 
+        };
+        private List<string> TypeKeywords = new List<string>()
+        {
             "INTEGER",
             "STRING",
-            "BOOLEAN"         
+            "BOOLEAN"
         };
-
         private void textBoxSqlEditor_TextChanged(object sender, TextChangedEventArgs e)
         {
             IEnumerable<TextRange> wordRanges = GetAllWordRanges(textBoxSqlEditor.Document);
@@ -362,6 +364,10 @@ namespace DBMS
             foreach (TextRange wordRange in wordRanges)
             {
                 if ( Keywords.Contains( wordRange.Text.ToUpper()))
+                {
+                    wordRange.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Red);
+                }
+                else if (TypeKeywords.Contains(wordRange.Text.ToUpper()))
                 {
                     wordRange.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Blue);
                 }
