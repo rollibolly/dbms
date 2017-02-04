@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DBMS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="635" Width="1009">
+        Title="MainWindow" Height="792.404" Width="1045.325">
     <Grid>
         <TreeView x:Name="treeView" 
                   HorizontalAlignment="Left" 
-                  Height="475" 
+                  Height="646" 
                   Margin="10,67,0,0" 
                   VerticalAlignment="Top" 
                   Width="217" SelectedItemChanged="treeView_SelectedItemChanged" ContextMenuOpening="treeView_ContextMenuOpening"
@@ -17,6 +17,14 @@
 
         </TreeView>
         <Button x:Name="btnCreateDatabase" Content="Create Database" HorizontalAlignment="Left" Margin="10,31,0,0" VerticalAlignment="Top" Width="96" Click="btnCreateDatabase_Click"/>
+        <RichTextBox x:Name="richTextBox" HorizontalAlignment="Left" Height="418" Margin="268,67,0,0" VerticalAlignment="Top" Width="697">
+            <FlowDocument>
+                <Paragraph>
+                    <Run Text="RichTextBox"/>
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
+        <DataGrid x:Name="dataGrid" HorizontalAlignment="Left" Margin="268,504,0,0" VerticalAlignment="Top" Height="209" Width="697"/>
 
     </Grid>
 </Window>
