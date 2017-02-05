@@ -130,21 +130,22 @@ namespace DBMS.KVManagement
 
         public static int ExecuteCommand(DBMSDatabase dbSchema, UICommand command)
         {
+            List<DBMSDatabase> databases = null;
+            DBMSResult commandResult = null;
             switch (command.Command)
             {
                 case CommandType.CREATE:
                     switch (command.Entity)
                     {
-                        case Utilities.EntityType.DATABASE:
-                            List<DBMSDatabase> databases = null;
-                            DBMSResult res = SchemaSerializer.LoadDatabases();
-                            if (!res.Success || res.Data == null)
+                        case Utilities.EntityType.DATABASE:                                                        
+                            commandResult = SchemaSerializer.LoadDatabases();
+                            if (!commandResult.Success || commandResult.Data == null)
                             {
                                 databases = new List<DBMSDatabase>();
                             }
                             else
                             {
-                                databases = (List<DBMSDatabase>)res.Data;
+                                databases = (List<DBMSDatabase>)commandResult.Data;
                             }
                             DBMSDatabase newDB = new DBMSDatabase();
                             newDB.DatabaseName = command.TableNames[0];
@@ -152,6 +153,28 @@ namespace DBMS.KVManagement
                             databases.Add(newDB);
                             SchemaSerializer.SaveDatabases(databases);
                             return 1;
+                        case Utilities.EntityType.INDEX:
+                            return 0;
+                        case Utilities.EntityType.TABLE:
+                            commandResult = SchemaSerializer.LoadDatabases();
+                            if (!commandResult.Success || commandResult.Data == null)
+                            {
+                                databases = new List<DBMSDatabase>();
+                            }
+                            else
+                            {
+                                databases = (List<DBMSDatabase>)commandResult.Data;
+                            }
+                            Table newTable = new Table();
+                            newTable.TableName = command.TableNames[0];
+                            newTable.Columns = new List<TableColumn>();
+                            foreach (var item in command.Columns)
+                            {
+                                newTable.Columns.Add(item);
+                            }
+                            databases.Where(r => r.DatabaseName == dbSchema.DatabaseName).FirstOrDefault().Tables.Add(newTable);
+                            SchemaSerializer.SaveDatabases(databases);
+                            return 0;
                         default:
                             return -1;
                     }
@@ -159,15 +182,14 @@ namespace DBMS.KVManagement
                     switch (command.Entity)
                     {
                         case Utilities.EntityType.DATABASE:
-                            List<DBMSDatabase> databases = null;
-                            DBMSResult res = SchemaSerializer.LoadDatabases();                            
-                            if (!res.Success || res.Data == null)
+                            commandResult = SchemaSerializer.LoadDatabases();                            
+                            if (!commandResult.Success || commandResult.Data == null)
                             {
                                 databases = new List<DBMSDatabase>();
                             }
                             else
                             {
-                                databases = (List<DBMSDatabase>)res.Data;
+                                databases = (List<DBMSDatabase>)commandResult.Data;
                             }
                             DBMSDatabase dbForRemove = databases.Where(r => r.DatabaseName == command.TableNames[0]).FirstOrDefault();
                             if (dbForRemove != null)
@@ -176,6 +198,27 @@ namespace DBMS.KVManagement
                             }
                             SchemaSerializer.SaveDatabases(databases);
                             return 1;
+                        case Utilities.EntityType.INDEX:
+                            return 0;
+                        case Utilities.EntityType.TABLE:
+                            commandResult = SchemaSerializer.LoadDatabases();
+                            if (!commandResult.Success || commandResult.Data == null)
+                            {
+                                databases = new List<DBMSDatabase>();
+                            }
+                            else
+                            {
+                                databases = (List<DBMSDatabase>)commandResult.Data;
+                            }
+                            Table tblForRemove = databases.Where(r => r.DatabaseName == dbSchema.DatabaseName).FirstOrDefault().Tables.Where(r => r.TableName == command.TableNames[0]).FirstOrDefault();
+                            databases.Where(r => r.DatabaseName == dbSchema.DatabaseName).FirstOrDefault().Tables.Remove(tblForRemove);
+                            string tblFilnemae = String.Format("{0}\\{1}", dbSchema.FolderName, tblForRemove.FileName);
+                            if (File.Exists(tblFilnemae))
+                            {
+                                File.Delete(tblFilnemae);
+                            }
+                            SchemaSerializer.SaveDatabases(databases);
+                            return 0;
                         default:
                             return -1;
                     }               
@@ -186,7 +229,13 @@ namespace DBMS.KVManagement
                         columnValues.Add(item.Name, item.Value);
                     }
                     Table tableSchema = dbSchema.Tables.Where(r => r.TableName == command.TableNames[0].Trim()).FirstOrDefault();
-                    return DatabaseMgr.Insert(dbSchema, tableSchema, columnValues);                    
+                    return DatabaseMgr.Insert(dbSchema, tableSchema, columnValues);
+                case CommandType.DELETE:
+                    return 0;
+                case CommandType.SELECT:
+                    return 0;
+                case CommandType.UPDATE:
+                    return 0;
                 default:
                     return -1;
             }

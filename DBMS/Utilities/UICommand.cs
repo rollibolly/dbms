@@ -29,8 +29,31 @@ namespace DBMS.Utilities
         public CommandType Command { get; set; }
         public EntityType Entity { get; set; }
         public string Path { get; set; }
-        public List<string> TableNames { get; set; }
-        public List<TableColumn> Columns { get; set; }
+
+        private List<string> tablenames;
+
+        public List<string> TableNames
+        {
+            get
+            {
+                if (tablenames == null)
+                    tablenames = new List<string>();
+                return tablenames;
+            }
+            set { tablenames = value; }
+        }
+
+        private List<TableColumn> columns;
+        public List<TableColumn> Columns
+        {
+            get
+            {
+                if (columns == null)
+                    columns = new List<TableColumn>();
+                return columns;
+            }
+            set { columns = value; }
+        }
         public string ErrorMessage { get; set; }
         public bool Success { get; set; }
         public override string ToString()

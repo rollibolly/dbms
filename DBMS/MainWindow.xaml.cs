@@ -308,16 +308,26 @@ namespace DBMS
 
         private void DropEntityItem_Click(object sender, RoutedEventArgs e)
         {
+            UICommand cmd = new UICommand();
+            cmd.Command = Utilities.CommandType.DROP;
             switch (SelectedEntityType)
             {
                 case Models.DBStructure.EntityType.DATABASE:
-                    CurrentDatabases.Remove(SelectedDatabase);
-                    SchemaSerializer.SaveDatabases(CurrentDatabases);
+                    cmd.Entity = Utilities.EntityType.DATABASE;
+                    cmd.TableNames.Add(SelectedDatabase.DatabaseName);
+                    DatabaseMgr.ExecuteCommand(SelectedDatabase, cmd);
+
+                    //CurrentDatabases.Remove(SelectedDatabase);
+                    //SchemaSerializer.SaveDatabases(CurrentDatabases);
                     FillTreeView();
                     break;
                 case Models.DBStructure.EntityType.TABLE:
-                    CurrentDatabases.FirstOrDefault(r => r.DatabaseName == SelectedDatabase.DisplayName).Tables.Remove(SelectedTable);
-                    SchemaSerializer.SaveDatabases(CurrentDatabases);
+                    cmd.Entity = Utilities.EntityType.TABLE;
+                    cmd.TableNames.Add(SelectedTable.TableName);
+                    DatabaseMgr.ExecuteCommand(SelectedDatabase, cmd);
+
+                    //CurrentDatabases.FirstOrDefault(r => r.DatabaseName == SelectedDatabase.DisplayName).Tables.Remove(SelectedTable);
+                    //SchemaSerializer.SaveDatabases(CurrentDatabases);
                     FillTreeView();
                     break;
             }
