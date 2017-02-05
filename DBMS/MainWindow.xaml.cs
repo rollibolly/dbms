@@ -48,6 +48,8 @@ namespace DBMS
             if (result.Success)
             {
                 CurrentDatabases = result.Data as List<DBMSDatabase>;
+                comboBoxSelectedDatabase.ItemsSource = CurrentDatabases;
+                comboBoxSelectedDatabase.DisplayMemberPath = "DatabaseName";
                 foreach (var database in CurrentDatabases)
                 {
                     TreeViewItem dbItem = new TreeViewItem();                    
@@ -433,7 +435,8 @@ namespace DBMS
             {
                 CommandInterpreter ci = new CommandInterpreter();
                 UICommand ui = ci.InterpretCommand(query);
-                DatabaseMgr.ExecuteCommand(SelectedDatabase, ui);
+                
+                DatabaseMgr.ExecuteCommand(comboBoxSelectedDatabase.SelectedItem as DBMSDatabase, ui);
                 MessageBox.Show(ui.ToString());
             } 
             catch(Exception ex)
