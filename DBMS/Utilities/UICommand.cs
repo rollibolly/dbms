@@ -36,7 +36,22 @@ namespace DBMS.Utilities
         public CommandType Command { get; set; }
         public EntityType Entity { get; set; }
         public string Path { get; set; }
-        
+
+        private List<WhereClause> whereclauses;
+        public List<WhereClause> WhereClauses
+        {
+            get
+            {
+                if (whereclauses == null)
+                    whereclauses = new List<WhereClause>();
+                return whereclauses;
+            }
+
+            set
+            {
+                whereclauses = value;
+            }
+        }    
 
         private List<string> tablenames;
 
@@ -68,12 +83,13 @@ namespace DBMS.Utilities
         public bool Success { get; set; }
         public override string ToString()
         {
-            string str = string.Format("Command: {0}\nEntity: {1}\nSuccess: {2}\nTables: {3}\nColumns: {4}\nError message: {5}\nDatabase path: {6}\nIndex name: {7}\n", 
+            string str = string.Format("Command: {0}\nEntity: {1}\nSuccess: {2}\nTables: {3}\nColumns: {4}\nWhere clause: {5}\nError message: {6}\nDatabase path: {7}\nIndex name: {8}\n",
                 Command.ToString(),
                 Entity.ToString(),
                 Success,
                 string.Join(", ", TableNames),
                 string.Join(", ", Columns.Select(r => string.Format("Name: {0} | Type: {1} | Is PK: {2} | Is Unique: {3} | Is Null: {4}", r.Name, r.DataType.ToString(), r.IsPrimaryKey, r.IsUnique, r.IsNull))),
+                string.Join(", ", WhereClauses.Select(r => string.Format("Left value: {0} | Operator: {1} | Right value: {2}", r.LeftValue, r.Operator, r.RightValue))),
                 ErrorMessage,
                 Path,
                 IndexName

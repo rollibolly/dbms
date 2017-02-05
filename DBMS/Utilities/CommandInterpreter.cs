@@ -263,16 +263,32 @@ namespace DBMS.Utilities
             command.Entity = EntityType.TABLE;
 
             sqltext = sqltext.ToLower();
-            string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z]+)? ?(=|<>|<|>|<=|>=)? ?([a-z0-9]+)?";
+            string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z]+)? ?(=|<>|<|>|<=|>=)? ?('?[a-z0-9]+'?)?";
             Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
 
-            var s = m.Groups[1].ToString();
-            var a = m.Groups[2].ToString();
-            var b = m.Groups[3].ToString();
-            var c = m.Groups[4].ToString();
-            var d = m.Groups[5].ToString();
-            // string d = m.Groups[2].ToString();
+            command.Success = true;
+            command.TableNames = new List<string>();
+            command.TableNames.Add(m.Groups[1].ToString());
 
+            if (m.Groups[2].ToString() == "where")
+            {
+                if (m.Groups[3].ToString() == "" || m.Groups[4].ToString() == "" || m.Groups[5].ToString() == "")
+                {
+                    command.Success = false;
+                    command.ErrorMessage = "Syntax error! Correct format: 'delete from TableName where ColumnName operator Value' (where operator can be: '=, <>, <, >, <=, >=')";
+                }
+                else
+                {
+                    command.Success = true;
+                    command.WhereClauses = new List<WhereClause>();
+                    WhereClause wc = new WhereClause();
+                    wc.LeftValue = m.Groups[3].ToString();
+                    wc.Operator = m.Groups[4].ToString();
+                    wc.RightValue = m.Groups[5].ToString();
+                    command.WhereClauses.Add(wc);
+                }
+            }
+            
             return command;
         }
 
