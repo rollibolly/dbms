@@ -52,7 +52,9 @@ namespace DBMS
                 comboBoxSelectedDatabase.DisplayMemberPath = "DatabaseName";
                 foreach (var database in CurrentDatabases)
                 {
-                    TreeViewItem dbItem = new TreeViewItem();                    
+                    TreeViewItem dbItem = new TreeViewItem();
+                    if (database == null)
+                        continue;                   
                     dbItem.Header = database.DatabaseName;
                     dbItem.Tag = database;
 
@@ -436,10 +438,11 @@ namespace DBMS
             {
                 CommandInterpreter ci = new CommandInterpreter();
                 UICommand ui = ci.InterpretCommand(query);
-                DataTable resTable = new DataTable() ;
+                DataTable resTable = null;
                 MessageBox.Show(ui.ToString());
                 DatabaseMgr.ExecuteCommand(comboBoxSelectedDatabase.SelectedItem as DBMSDatabase, ui, out resTable);
-                FillResultView(resTable);
+                if (resTable != null)
+                    FillResultView(resTable);
             } 
             catch(Exception ex)
             {
