@@ -161,10 +161,12 @@ namespace DBMS.Utilities
                 command.Columns.Add(column);
             }
 
+            command.TableNames = new List<string>();
+
             foreach (var item in tables)
             {
-                command.TableNames = new List<string>();
-                command.TableNames.Add(item.ToString().Trim());
+                char c = '\\';
+                command.TableNames.Add(item.ToString().Split(c).FirstOrDefault());
             }
 
             return command;
@@ -241,7 +243,10 @@ namespace DBMS.Utilities
             { 
                 Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
                 command.TableNames = new List<string>();
-                command.TableNames.Add(m.Groups[1].ToString());
+                string tablename = m.Groups[1].ToString();
+                string[] stringSeparators = new string[] { "\r\n" };
+                command.TableNames.Add(tablename.Split(stringSeparators, StringSplitOptions.None).FirstOrDefault().ToString());
+                
                 command.Columns = new List<TableColumn>();
             }
             return command;
