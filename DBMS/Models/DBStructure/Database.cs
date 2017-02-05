@@ -28,7 +28,19 @@ namespace DBMS.Models.DBStructure
             }
         }
         [DataMember]
-        public List<Table> Tables { get; set; }
+        public List<Table> Tables
+        {
+            get
+            {
+                if (tables == null)                
+                    tables = new List<Table>();
+                return tables;
+            }
+            set { tables = value; }
+        }
+
+        [IgnoreDataMember]
+        private List<Table> tables;
         [DataMember]
         public List<Index> Indexes
         {

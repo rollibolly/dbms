@@ -148,7 +148,7 @@ namespace DBMS.KVManagement
                             }
                             DBMSDatabase newDB = new DBMSDatabase();
                             newDB.DatabaseName = command.TableNames[0];
-                            //newDB.FolderName = command.Path;
+                            newDB.FolderName = command.Path;
                             databases.Add(newDB);
                             SchemaSerializer.SaveDatabases(databases);
                             return 1;
