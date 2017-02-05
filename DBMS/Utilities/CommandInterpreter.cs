@@ -177,6 +177,7 @@ namespace Utilities
         {
             UICommand command = new UICommand();
             sqltext = sqltext.ToLower();
+            bool error = false;
             string pattern = @"drop " + entity.ToLower() + @" (.*)";
             command.Command = CommandType.DROP;
 
@@ -184,20 +185,34 @@ namespace Utilities
             {
                 case "table":
                     command.Entity = EntityType.TABLE;
+                    error = false;
                     break;
                 case "database":
                     command.Entity = EntityType.DATABASE;
+                    error = false;
                     break;
                 case "index":
                     command.Entity = EntityType.INDEX;
+                    error = false;
+                    break;
+                default:
+                    error = true;
                     break;
             }
 
-            Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
-            command.TableNames = new List<string>();
-            command.TableNames.Add(m.Groups[1].ToString());
-            command.Columns = new List<TableColumn>();
-
+            if (error)
+            {
+                command.TableNames = new List<string>();
+                command.Columns = new List<TableColumn>();
+                command.ErrorMessage = "Invalid syntax! Please use: 'drop table/database/index name'";
+            }
+            else
+            { 
+                Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
+                command.TableNames = new List<string>();
+                command.TableNames.Add(m.Groups[1].ToString());
+                command.Columns = new List<TableColumn>();
+            }
             return command;
         }
 
