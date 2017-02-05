@@ -14,78 +14,96 @@ namespace Utilities
         {
             UICommand command = new UICommand();
             string pattern = "";
+            bool id = false;
 
             command.Command = CommandType.CREATE;
 
-            switch (entity)
+            switch (entity.ToLower())
             {
-                case "TABLE":
+                case "table":
                     command.Entity = EntityType.TABLE;
-                    pattern = @"CREATE " + entity + @" (.+?) \((.*\))";
+                    pattern = @"create " + entity.ToLower() + @" (.+?) \((.*\))";
+                    id = false;
                     break;
-                case "INDEX":
+                case "index":
                     command.Entity = EntityType.INDEX;
-                    pattern = @"CREATE " + entity + @" ([a-zA-Z]+)";
+                    pattern = @"create " + entity.ToLower() + @" (on) ([a-zA-Z]+) \(([a-zA-Z]+\))";
+                    id = true;
                     break;
-                case "DATABASE":
+                case "database":
                     command.Entity = EntityType.DATABASE;
-                    pattern = @"CREATE " + entity + @" ([a-zA-Z]+)";
+                    pattern = @"create " + entity.ToLower() + @" ([a-zA-Z]+)";
+                    id = false;
                     break;
             }
 
-            string pattern2 = @"(.+?) ([a-zA-Z]+)( PRIMARY KEY| UNIQUE)?( NOT NULL)?(,|\))";
-
-            Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
-       
-            string name = m.Groups[1].ToString();
-
-            command.TableNames = new List<string>();
-            command.TableNames.Add(name);
-            command.Columns = new List<TableColumn>();
-            
-            foreach (Match mm in Regex.Matches(m.Groups[2].ToString(), pattern2))
+            if (id)
             {
-                TableColumn tableColumn = new TableColumn();
-            
-                tableColumn.Name = mm.Groups[1].ToString().Trim();
+                Match m1 = Regex.Match(sqltext.ToLower(), pattern, RegexOptions.Singleline);
                 
-                switch (mm.Groups[2].ToString()) 
-                {
-                    case "STRING":
-                        tableColumn.DataType = DBMSDataType.STRING;
-                        break;
-                    case "INTEGER":
-                        tableColumn.DataType = DBMSDataType.INTEGER;
-                        break;
-                    case "BOOLEAN":
-                        tableColumn.DataType = DBMSDataType.BOOLEAN;
-                        break;
-                    case "FLOAT":
-                        tableColumn.DataType = DBMSDataType.FLOAT;
-                        break;
-                }
-            
-                switch (mm.Groups[3].ToString()) 
-                {
-                    case " PRIMARY KEY":
-                        tableColumn.IsPrimaryKey = true;
-                        tableColumn.IsUnique = false;
-                        break;
-                    case " UNIQUE":
-                        tableColumn.IsPrimaryKey = false;
-                        tableColumn.IsUnique = true;
-                        break;
-                    default:
-                        tableColumn.IsPrimaryKey = false;
-                        tableColumn.IsUnique = false;
-                        break;
-                }
-            
-                tableColumn.IsNull = (mm.Groups[4].ToString().Length == 0);
-            
+                command.TableNames = new List<string>();
+                command.TableNames.Add(m1.Groups[2].ToString());
+                command.Columns = new List<TableColumn>();
+
+                TableColumn tableColumn = new TableColumn();
+                tableColumn.Name = new String(m1.Groups[3].ToString().Where(Char.IsLetter).ToArray());// m1.Groups[3].ToString().Trim();
                 command.Columns.Add(tableColumn);
             }
+            else
+            { 
+                string pattern2 = @"(.+?) ([a-zA-Z]+)( primary key| unique)?( not null)?(,|\))";
 
+                Match m = Regex.Match(sqltext.ToLower(), pattern, RegexOptions.Singleline);
+       
+                string name = m.Groups[1].ToString();
+
+                command.TableNames = new List<string>();
+                command.TableNames.Add(name);
+                command.Columns = new List<TableColumn>();
+            
+                foreach (Match mm in Regex.Matches(m.Groups[2].ToString(), pattern2))
+                {
+                    TableColumn tableColumn = new TableColumn();
+            
+                    tableColumn.Name = mm.Groups[1].ToString().Trim();
+                
+                    switch (mm.Groups[2].ToString()) 
+                    {
+                        case "string":
+                            tableColumn.DataType = DBMSDataType.STRING;
+                            break;
+                        case "integer":
+                            tableColumn.DataType = DBMSDataType.INTEGER;
+                            break;
+                        case "boolean":
+                            tableColumn.DataType = DBMSDataType.BOOLEAN;
+                            break;
+                        case "float":
+                            tableColumn.DataType = DBMSDataType.FLOAT;
+                            break;
+                    }
+            
+                    switch (mm.Groups[3].ToString()) 
+                    {
+                        case " primary key":
+                            tableColumn.IsPrimaryKey = true;
+                            tableColumn.IsUnique = false;
+                            break;
+                        case " unique":
+                            tableColumn.IsPrimaryKey = false;
+                            tableColumn.IsUnique = true;
+                            break;
+                        default:
+                            tableColumn.IsPrimaryKey = false;
+                            tableColumn.IsUnique = false;
+                            break;
+                    }
+            
+                    tableColumn.IsNull = (mm.Groups[4].ToString().Length == 0);
+            
+                    command.Columns.Add(tableColumn);
+                }
+            }
             return command;
         }
 
@@ -125,10 +143,11 @@ namespace Utilities
             UICommand command = new UICommand();
 
             command.Command = CommandType.INSERT;
+            insertString = insertString.ToLower();
 
             IEnumerable<string> inserts = insertString.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
             string firstInsert = inserts.First();
-            int tableIndex = firstInsert.IndexOf("INSERT INTO ") + "INSERT INTO ".Length;
+            int tableIndex = firstInsert.IndexOf("insert into ") + "insert into ".Length;
 
             command.TableNames = new List<string>();
             string table = firstInsert.Substring(tableIndex, firstInsert.IndexOf("(", tableIndex) - tableIndex);
@@ -154,30 +173,58 @@ namespace Utilities
             return command;
         }
 
+        public UICommand DropTable(string sqltext, string entity)
+        {
+            UICommand command = new UICommand();
+            sqltext = sqltext.ToLower();
+            string pattern = @"drop " + entity.ToLower() + @" (.*)";
+            command.Command = CommandType.DROP;
+
+            switch (entity.ToLower())
+            {
+                case "table":
+                    command.Entity = EntityType.TABLE;
+                    break;
+                case "database":
+                    command.Entity = EntityType.DATABASE;
+                    break;
+                case "index":
+                    command.Entity = EntityType.INDEX;
+                    break;
+            }
+
+            Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
+            command.TableNames = new List<string>();
+            command.TableNames.Add(m.Groups[1].ToString());
+            command.Columns = new List<TableColumn>();
+
+            return command;
+        }
+
         public UICommand InterpretCommand(string sqltext)
         {
             UICommand command = new UICommand();
             string[] item = sqltext.Split(' ');
 
-            switch (item[0])
+            switch (item[0].ToLower())
             {
-                case "CREATE":
+                case "create":
                     command = CreateQuery(sqltext: sqltext, entity: item[1]);
                     break;
-                case "SELECT":
+                case "select":
                     command = SelectQuery(sql: sqltext);
                     break;
-                case "INSERT":
+                case "insert":
                     command = InsertQuery(insertString: sqltext);
                     break;
-                case "DELETE":
+                case "delete":
 
                     break;
-                case "DROP":
-                   // DropTable(sqltext);
+                case "drop":
+                    command =  DropTable(sqltext: sqltext, entity: item[1]);
                     break;
                 default:
-                    Console.WriteLine("Incorrect sql syntax!");
+                    //Console.WriteLine("Incorrect sql syntax!");
                     break;
             }
 
