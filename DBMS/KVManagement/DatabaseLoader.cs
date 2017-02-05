@@ -154,7 +154,31 @@ namespace DBMS.KVManagement
                             return 1;
                         default:
                             return -1;
-                    }                    
+                    }
+                case CommandType.DROP:
+                    switch (command.Entity)
+                    {
+                        case Utilities.EntityType.DATABASE:
+                            List<DBMSDatabase> databases = null;
+                            DBMSResult res = SchemaSerializer.LoadDatabases();                            
+                            if (!res.Success || res.Data == null)
+                            {
+                                databases = new List<DBMSDatabase>();
+                            }
+                            else
+                            {
+                                databases = (List<DBMSDatabase>)res.Data;
+                            }
+                            DBMSDatabase dbForRemove = databases.Where(r => r.DatabaseName == command.TableNames[0]).FirstOrDefault();
+                            if (dbForRemove != null)
+                            {
+                                databases.Remove(dbForRemove);
+                            }
+                            SchemaSerializer.SaveDatabases(databases);
+                            return 1;
+                        default:
+                            return -1;
+                    }               
                 case CommandType.INSERT:
                     Dictionary<string, object> columnValues = new Dictionary<string, object>();
                     foreach (var item in command.Columns)
