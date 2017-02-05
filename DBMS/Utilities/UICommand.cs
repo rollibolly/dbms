@@ -24,11 +24,19 @@ namespace DBMS.Utilities
         DATABASE
     }
 
+    public class WhereClause
+    {
+        public string LeftValue { get; set; }
+        public string Operator { get; set; }
+        public string RightValue { get; set; }
+    }
+
     public class UICommand
     {
         public CommandType Command { get; set; }
         public EntityType Entity { get; set; }
         public string Path { get; set; }
+        
 
         private List<string> tablenames;
 

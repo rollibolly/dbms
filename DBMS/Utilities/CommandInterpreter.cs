@@ -146,9 +146,12 @@ namespace DBMS.Utilities
             command.Command = CommandType.SELECT;
 
             //var reg = new Regex(@"select(.*?)(?<!\w*"")FROM(?!\w*?"")(.*?)");
-            var reg = new Regex(@"select (.*) from (.*)");
+            var reg = new Regex(@"select (.*) from (.*)");// (offset?) ([1-9+]?) (limit?) ([1-9]+?)");
             var colunms = reg.Match(sql).Groups[1].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             var tables = reg.Match(sql).Groups[2].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+            //string s = reg.Match(sql).Groups[3].Value.ToString();
+            //string q = reg.Match(sql).Groups[4].Value.ToString();
 
             //var where = reg.Match(sql).Groups[4].Value.Split(new string[] { "&&", "||", "AND", "OR" }, StringSplitOptions.None);
 
@@ -165,8 +168,9 @@ namespace DBMS.Utilities
 
             foreach (var item in tables)
             {
-                char c = '\\';
-                command.TableNames.Add(item.ToString().Split(c).FirstOrDefault());
+                string tablename = item.ToString();
+                string[] stringSeparators = new string[] { "\r" };
+                command.TableNames.Add(tablename.Split(stringSeparators, StringSplitOptions.None).FirstOrDefault().ToString());
             }
 
             return command;
@@ -252,6 +256,26 @@ namespace DBMS.Utilities
             return command;
         }
 
+        public UICommand DeleteQuery(string sqltext)
+        {
+            UICommand command = new UICommand();
+            command.Command = CommandType.DELETE;
+            command.Entity = EntityType.TABLE;
+
+            sqltext = sqltext.ToLower();
+            string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z]+)? ?(=|<>|<|>|<=|>=)? ?([a-z0-9]+)?";
+            Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
+
+            var s = m.Groups[1].ToString();
+            var a = m.Groups[2].ToString();
+            var b = m.Groups[3].ToString();
+            var c = m.Groups[4].ToString();
+            var d = m.Groups[5].ToString();
+            // string d = m.Groups[2].ToString();
+
+            return command;
+        }
+
         public UICommand InterpretCommand(string sqltext)
         {
             UICommand command = new UICommand();
@@ -269,7 +293,7 @@ namespace DBMS.Utilities
                     command = InsertQuery(insertString: sqltext);
                     break;
                 case "delete":
-
+                    command = DeleteQuery(sqltext);
                     break;
                 case "drop":
                     command =  DropTable(sqltext: sqltext, entity: item[1]);
