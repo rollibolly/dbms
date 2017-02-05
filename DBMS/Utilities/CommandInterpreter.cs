@@ -14,7 +14,7 @@ namespace DBMS.Utilities
         {
             UICommand command = new UICommand();
             string pattern = "";
-            bool id = false;
+            int id = 0;
 
             command.Command = CommandType.CREATE;
 
@@ -23,19 +23,19 @@ namespace DBMS.Utilities
                 case "table":
                     command.Entity = EntityType.TABLE;
                     pattern = @"create " + entity.ToLower() + @" (.+?) \((.*\))";
-                    id = false;
+                    id = 1;
                     command.Success = true;
                     break;
                 case "index":
                     command.Entity = EntityType.INDEX;
                     pattern = @"create " + entity.ToLower() + @" (on) ([a-zA-Z]+) \(([a-zA-Z]+\))";
-                    id = true;
+                    id = 2;
                     command.Success = true;
                     break;
                 case "database":
                     command.Entity = EntityType.DATABASE;
-                    pattern = @"create " + entity.ToLower() + @" ([a-zA-Z]+)";
-                    id = false;
+                    pattern = @"create " + entity.ToLower() + @" ([a-zA-Z]+) (.*)";
+                    id = 3;
                     command.Success = true;
                     break;
                 default:
@@ -45,26 +45,41 @@ namespace DBMS.Utilities
 
             if (command.Success)
             {
-                if (id)
+                if (id == 3)
                 {
                     Match m1 = Regex.Match(sqltext.ToLower(), pattern, RegexOptions.Singleline);
 
+                    command.Path = m1.Groups[2].ToString().Trim();
                     command.TableNames = new List<string>();
-                    command.TableNames.Add(m1.Groups[2].ToString());
+                    command.TableNames.Add(m1.Groups[1].ToString().Trim());
                     command.Columns = new List<TableColumn>();
 
                     TableColumn tableColumn = new TableColumn();
                     tableColumn.Name = new String(m1.Groups[3].ToString().Where(Char.IsLetter).ToArray());// m1.Groups[3].ToString().Trim();
                     command.Columns.Add(tableColumn);
                 }
-                else
+
+                if (id == 2)
+                {
+                    Match m1 = Regex.Match(sqltext.ToLower(), pattern, RegexOptions.Singleline);
+
+                    command.TableNames = new List<string>();
+                    command.TableNames.Add(m1.Groups[2].ToString().Trim());
+                    command.Columns = new List<TableColumn>();
+
+                    TableColumn tableColumn = new TableColumn();
+                    tableColumn.Name = new String(m1.Groups[3].ToString().Where(Char.IsLetter).ToArray());// m1.Groups[3].ToString().Trim();
+                    command.Columns.Add(tableColumn);
+                }
+
+                if (id == 1)
                 {
                     string pattern2 = @"(.+?) ([a-zA-Z]+)( primary key| unique)?( not null)?(,|\))";
 
                     Match m = Regex.Match(sqltext.ToLower(), pattern, RegexOptions.Singleline);
 
-                    string name = m.Groups[1].ToString();
-
+                    string name = m.Groups[1].ToString().Trim();
+                    
                     command.TableNames = new List<string>();
                     command.TableNames.Add(name);
                     command.Columns = new List<TableColumn>();
