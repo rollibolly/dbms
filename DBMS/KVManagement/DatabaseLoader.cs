@@ -8,7 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using DBMS.Utilities;
 using DBMS.Models.DBStructure;
-
+using System.Data;
 
 namespace DBMS.KVManagement
 {
@@ -73,15 +73,45 @@ namespace DBMS.KVManagement
                 return DBMSResult.FAILURE(ex.Message);
             }            
         }
+        public DBMSResult Get<T>(uint? offset, uint? limit)
+        {
+            BTreeCursor cursor = database.Cursor();
+            int counter = 0;
+            Dictionary<T, T> resultSet = new Dictionary<T, T>();
+
+            if (offset.HasValue)
+            {
+                cursor.Move(offset.Value);
+            }
+            if (limit.HasValue)
+            {
+                while (counter < limit.Value && cursor.MoveNext())
+                {
+                    KeyValuePair<DatabaseEntry, DatabaseEntry> row = cursor.Current;
+                    resultSet.Add(FromByteArray<T>(row.Key.Data), FromByteArray<T>(row.Value.Data));
+                    counter++;
+                }
+            }
+            else
+            {
+                while (cursor.MoveNext())
+                {
+                    KeyValuePair<DatabaseEntry, DatabaseEntry> row = cursor.Current;
+                    resultSet.Add(FromByteArray<T>(row.Key.Data), FromByteArray<T>(row.Value.Data));                    
+                }
+            }
+            return DBMSResult.SUCCESS(resultSet);
+        }
         public DBMSResult GetTopN<T>(int n)
         {
             BTreeCursor cursor = database.Cursor();            
             int counter = 0;
             Dictionary<object, T> resultSet = new Dictionary<object, T>();
-            while (counter < n++ && cursor.MoveNext())
+            while (counter < n && cursor.MoveNext())
             {
                 KeyValuePair<DatabaseEntry, DatabaseEntry> row = cursor.Current;
-                resultSet.Add(FromByteArray<object>(row.Key.Data), FromByteArray<T>(row.Value.Data));                
+                resultSet.Add(FromByteArray<object>(row.Key.Data), FromByteArray<T>(row.Value.Data));
+                counter++;
             }
             return DBMSResult.SUCCESS(resultSet);
         }
@@ -128,13 +158,14 @@ namespace DBMS.KVManagement
         }
         #endregion
 
-        public static int ExecuteCommand(DBMSDatabase dbSchema, UICommand command)
+        public static int ExecuteCommand(DBMSDatabase dbSchema, UICommand command, out DataTable resultTable)
         {
             List<DBMSDatabase> databases = null;
+            resultTable = null;
             DBMSResult commandResult = null;
             switch (command.Command)
             {
-                case CommandType.CREATE:
+                case Utilities.CommandType.CREATE:
                     switch (command.Entity)
                     {
                         case Utilities.EntityType.DATABASE:                                                        
@@ -178,7 +209,7 @@ namespace DBMS.KVManagement
                         default:
                             return -1;
                     }
-                case CommandType.DROP:
+                case Utilities.CommandType.DROP:
                     switch (command.Entity)
                     {
                         case Utilities.EntityType.DATABASE:
@@ -222,7 +253,7 @@ namespace DBMS.KVManagement
                         default:
                             return -1;
                     }               
-                case CommandType.INSERT:
+                case Utilities.CommandType.INSERT:
                     Dictionary<string, object> columnValues = new Dictionary<string, object>();
                     foreach (var item in command.Columns)
                     {
@@ -230,15 +261,67 @@ namespace DBMS.KVManagement
                     }
                     Table tableSchema = dbSchema.Tables.Where(r => r.TableName == command.TableNames[0].Trim()).FirstOrDefault();
                     return DatabaseMgr.Insert(dbSchema, tableSchema, columnValues);
-                case CommandType.DELETE:
+                case Utilities.CommandType.DELETE:
                     return 0;
-                case CommandType.SELECT:
+                case Utilities.CommandType.SELECT:
+                    List<string> columnNames = command.Columns.Select(r => r.Name).ToList();
+                    Table tblForSelect = dbSchema.Tables.Where(r => r.TableName == command.TableNames[0]).FirstOrDefault();
+                    resultTable = Select(dbSchema, tblForSelect, columnNames, null, null);
                     return 0;
-                case CommandType.UPDATE:
+                case Utilities.CommandType.UPDATE:
                     return 0;
                 default:
                     return -1;
             }
+        }
+        public static DataTable Select(DBMSDatabase dbSchema, Table tableSchema, List<string> columns, uint? offset, uint? limit)
+        {
+            DataTable resultTable = new DataTable();
+            DatabaseMgr mgr = new DatabaseMgr(String.Format("{0}\\{1}", dbSchema.FolderName, tableSchema.FileName));
+            mgr.Open();
+            List<string> orderedColumnNames = tableSchema.Columns.OrderBy(r => r.Order).Select(r => r.Name).ToList();
+            foreach (string item in columns)
+            {
+                resultTable.Columns.Add(item);
+            }
+            string pkName = null;
+            int pkOrder = 0;
+            if (tableSchema.PrimaryKey != null)
+            {
+                pkName = tableSchema.PrimaryKey.Name;
+                pkOrder = (int)tableSchema.PrimaryKey.Order;
+            }
+            DBMSResult result = mgr.Get<string>(offset, limit);
+            Dictionary<string, string> resultList = result.Data as Dictionary<string, string>;
+            foreach (var row in resultList)
+            {
+                string key = row.Key;
+                string[] values = row.Value.Split('|');
+                DataRow dataRow = resultTable.NewRow();
+                int index = 0;
+                foreach (string orderedColumn in orderedColumnNames)
+                {
+                    
+                    if (columns.Contains(orderedColumn))
+                    {
+                        if (orderedColumn == pkName)
+                        {
+                            dataRow[orderedColumn] = key;
+                        }
+                        else
+                        {
+                            dataRow[orderedColumn] = values[index];
+                        }
+                    }
+                    if (pkName != null && pkName != orderedColumn)
+                    {
+                        index++;
+                    }
+                }
+                resultTable.Rows.Add(dataRow);
+            }
+            mgr.Close();
+            return resultTable;
         }
 
         public static int Insert(DBMSDatabase dbSchema, Table tableSchema, Dictionary<string, object> columnValues)

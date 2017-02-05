@@ -312,12 +312,13 @@ namespace DBMS
         {
             UICommand cmd = new UICommand();
             cmd.Command = Utilities.CommandType.DROP;
+            DataTable dt;
             switch (SelectedEntityType)
             {
                 case Models.DBStructure.EntityType.DATABASE:
                     cmd.Entity = Utilities.EntityType.DATABASE;
                     cmd.TableNames.Add(SelectedDatabase.DatabaseName);
-                    DatabaseMgr.ExecuteCommand(SelectedDatabase, cmd);
+                    DatabaseMgr.ExecuteCommand(SelectedDatabase, cmd, out dt);
 
                     //CurrentDatabases.Remove(SelectedDatabase);
                     //SchemaSerializer.SaveDatabases(CurrentDatabases);
@@ -326,7 +327,7 @@ namespace DBMS
                 case Models.DBStructure.EntityType.TABLE:
                     cmd.Entity = Utilities.EntityType.TABLE;
                     cmd.TableNames.Add(SelectedTable.TableName);
-                    DatabaseMgr.ExecuteCommand(SelectedDatabase, cmd);
+                    DatabaseMgr.ExecuteCommand(SelectedDatabase, cmd, out dt);
 
                     //CurrentDatabases.FirstOrDefault(r => r.DatabaseName == SelectedDatabase.DisplayName).Tables.Remove(SelectedTable);
                     //SchemaSerializer.SaveDatabases(CurrentDatabases);
@@ -435,9 +436,10 @@ namespace DBMS
             {
                 CommandInterpreter ci = new CommandInterpreter();
                 UICommand ui = ci.InterpretCommand(query);
-                
-                DatabaseMgr.ExecuteCommand(comboBoxSelectedDatabase.SelectedItem as DBMSDatabase, ui);
+                DataTable resTable = new DataTable() ;
                 MessageBox.Show(ui.ToString());
+                DatabaseMgr.ExecuteCommand(comboBoxSelectedDatabase.SelectedItem as DBMSDatabase, ui, out resTable);
+                FillResultView(resTable);
             } 
             catch(Exception ex)
             {
@@ -445,6 +447,26 @@ namespace DBMS
             }
             TimeSpan ellapsed = DateTime.Now.Subtract(start);
             statusMessage.Text = string.Format("Execution duration: {0} ms", ellapsed.Milliseconds);
+        }
+
+        private void FillResultView(DataTable resTable)
+        {
+            dataGridResult.Items.Clear();
+            dataGridResult.Columns.Clear();
+            int i = 0;
+            foreach (DataColumn item in resTable.Columns)
+            {
+                DataGridTextColumn col = new DataGridTextColumn();
+                col.Header = item.ColumnName;
+                col.Binding = new Binding(string.Format("[{0}]", i));
+                dataGridResult.Columns.Add(col);
+                i++;
+            }
+
+            foreach (DataRow resRow in resTable.Rows)
+            {                
+                dataGridResult.Items.Add(resRow.ItemArray);
+            }
         }
 
         private void btnRefresh_Click(object sender, RoutedEventArgs e)
