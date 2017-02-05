@@ -19,7 +19,7 @@ using DBMS.Models.DBStructure;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Text.RegularExpressions;
-using Utilities;
+
 
 namespace DBMS
 {
@@ -363,7 +363,9 @@ namespace DBMS
             "KEY",
             "UNIQUE",
             "NOT",
-            "NULL"                 
+            "NULL",
+            "DROP",
+            "VALUES"
         };
         private List<string> TypeKeywords = new List<string>()
         {
@@ -430,6 +432,11 @@ namespace DBMS
             }
             TimeSpan ellapsed = DateTime.Now.Subtract(start);
             statusMessage.Text = string.Format("Execution duration: {0} ms", ellapsed.Milliseconds);
+        }
+
+        private void btnRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            FillTreeView();
         }
     }
 }

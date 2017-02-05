@@ -8,7 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using DBMS.Utilities;
 using DBMS.Models.DBStructure;
-using Utilities;
+
 
 namespace DBMS.KVManagement
 {
@@ -132,6 +132,29 @@ namespace DBMS.KVManagement
         {
             switch (command.Command)
             {
+                case CommandType.CREATE:
+                    switch (command.Entity)
+                    {
+                        case Utilities.EntityType.DATABASE:
+                            List<DBMSDatabase> databases = null;
+                            DBMSResult res = SchemaSerializer.LoadDatabases();
+                            if (!res.Success || res.Data == null)
+                            {
+                                databases = new List<DBMSDatabase>();
+                            }
+                            else
+                            {
+                                databases = (List<DBMSDatabase>)res.Data;
+                            }
+                            DBMSDatabase newDB = new DBMSDatabase();
+                            newDB.DatabaseName = command.TableNames[0];
+                            //newDB.FolderName = command.Path;
+                            databases.Add(newDB);
+                            SchemaSerializer.SaveDatabases(databases);
+                            return 1;
+                        default:
+                            return -1;
+                    }                    
                 case CommandType.INSERT:
                     Dictionary<string, object> columnValues = new Dictionary<string, object>();
                     foreach (var item in command.Columns)
