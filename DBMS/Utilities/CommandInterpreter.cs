@@ -28,7 +28,7 @@ namespace DBMS.Utilities
                     break;
                 case "index":
                     command.Entity = EntityType.INDEX;
-                    pattern = @"create " + entity.ToLower() + @" (on) ([a-zA-Z]+) \(([a-zA-Z]+\))";
+                    pattern = @"create " + entity.ToLower() + @"(.*) (on) ([a-zA-Z]+) \(([a-zA-Z]+\))";
                     id = 2;
                     command.Success = true;
                     break;
@@ -63,12 +63,13 @@ namespace DBMS.Utilities
                 {
                     Match m1 = Regex.Match(sqltext.ToLower(), pattern, RegexOptions.Singleline);
 
+                    command.IndexName = m1.Groups[1].ToString().Trim();
                     command.TableNames = new List<string>();
-                    command.TableNames.Add(m1.Groups[2].ToString().Trim());
+                    command.TableNames.Add(m1.Groups[3].ToString().Trim());
                     command.Columns = new List<TableColumn>();
 
                     TableColumn tableColumn = new TableColumn();
-                    tableColumn.Name = new String(m1.Groups[3].ToString().Where(Char.IsLetter).ToArray());// m1.Groups[3].ToString().Trim();
+                    tableColumn.Name = new String(m1.Groups[4].ToString().Where(Char.IsLetter).ToArray());// m1.Groups[3].ToString().Trim();
                     command.Columns.Add(tableColumn);
                 }
 
@@ -144,26 +145,26 @@ namespace DBMS.Utilities
             command.Success = true;
             command.Command = CommandType.SELECT;
 
-            var reg = new Regex(@"(?is)SELECT(.*?)(?<!\w*"")FROM(?!\w*?"")(.*?)(?=WHERE|ORDER|$)");
+            //var reg = new Regex(@"select(.*?)(?<!\w*"")FROM(?!\w*?"")(.*?)");
+            var reg = new Regex(@"select (.*) from (.*)");
             var colunms = reg.Match(sql).Groups[1].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             var tables = reg.Match(sql).Groups[2].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-            var where = reg.Match(sql).Groups[4].Value.Split(new string[] { "&&", "||", "AND", "OR" }, StringSplitOptions.None);
+            //var where = reg.Match(sql).Groups[4].Value.Split(new string[] { "&&", "||", "AND", "OR" }, StringSplitOptions.None);
 
             command.Columns = new List<TableColumn>();
 
             foreach (var item in colunms)
             {
                 TableColumn column = new TableColumn();
-                column.Name = item.ToString();
-                
+                column.Name = item.ToString().Trim();   
                 command.Columns.Add(column);
             }
 
             foreach (var item in tables)
             {
                 command.TableNames = new List<string>();
-                command.TableNames.Add(item.ToString());
+                command.TableNames.Add(item.ToString().Trim());
             }
 
             return command;
