@@ -8,6 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using DBMS.Utilities;
 using DBMS.Models.DBStructure;
+using Utilities;
 
 namespace DBMS.KVManagement
 {
@@ -126,6 +127,24 @@ namespace DBMS.KVManagement
             }
         }
         #endregion
+
+        public static int ExecuteCommand(DBMSDatabase dbSchema, UICommand command)
+        {
+            switch (command.Command)
+            {
+                case CommandType.INSERT:
+                    Dictionary<string, object> columnValues = new Dictionary<string, object>();
+                    foreach (var item in command.Columns)
+                    {
+                        columnValues.Add(item.Name, item.Value);
+                    }
+                    Table tableSchema = dbSchema.Tables.Where(r => r.TableName == command.TableNames[0].Trim()).FirstOrDefault();
+                    return DatabaseMgr.Insert(dbSchema, tableSchema, columnValues);                    
+                default:
+                    return -1;
+            }
+        }
+
         public static int Insert(DBMSDatabase dbSchema, Table tableSchema, Dictionary<string, object> columnValues)
         {
             return Insert(dbSchema, tableSchema, new List<Dictionary<string, object>> { columnValues });
@@ -138,6 +157,18 @@ namespace DBMS.KVManagement
             if (!res.Success)
             {
                 throw new IOException("Can not open database file");
+            }
+
+            // Opening index managers if any
+            List<Index> indexListForTable = dbSchema.Indexes.Where(r => r.RefTable.FileName == tableSchema.FileName).ToList();
+            Dictionary<string, DatabaseMgr> indexManagers = new Dictionary<string, DatabaseMgr>();
+            foreach (Index index in indexListForTable)
+            {
+                DatabaseMgr indexManager = new DatabaseMgr(String.Format("{0}\\{1}", dbSchema.FolderName, index.Filename));
+                res = indexManager.Open();
+                if (!res.Success)
+                    throw new IOException(String.Format("Can not open index file {0}", index.Filename));
+                indexManagers.Add(index.RefColumn.Name, indexManager);
             }
 
             // Buildin the key and value strings for berkley db
@@ -169,6 +200,17 @@ namespace DBMS.KVManagement
                     {
                         valuesList.Add("");
                     }
+                    
+                    if (indexManagers.ContainsKey(columnName))
+                    {
+                        string indexKey = row[columnName].ToString();
+                        string indexValue = keyStr;
+                        res = indexManagers[columnName].Put(indexKey, indexValue);
+                        if (!res.Success)
+                        {
+                            throw new ArgumentException(string.Format("Can not insert into index file for column [{0}] key: [{1}] value: [{2}]", columnName, indexKey, indexValue));
+                        }
+                    }
                 }
                 valueStr = string.Join("|", valuesList);
                 res = mgr.Put(keyStr, valueStr);
@@ -182,6 +224,14 @@ namespace DBMS.KVManagement
             if (!res.Success)
             {
                 throw new IOException("Can not close database file");
+            }
+            foreach (var item in indexManagers)
+            {
+                res = item.Value.Close();
+                if (!res.Success)
+                {
+                    throw new IOException("Can not close index file");
+                }
             }
             return rowsAffected;
         }

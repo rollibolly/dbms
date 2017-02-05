@@ -421,7 +421,7 @@ namespace DBMS
             {
                 CommandInterpreter ci = new CommandInterpreter();
                 UICommand ui = ci.InterpretCommand(query);
-                
+                DatabaseMgr.ExecuteCommand(SelectedDatabase, ui);
                 MessageBox.Show(ui.ToString());
             } 
             catch(Exception ex)
