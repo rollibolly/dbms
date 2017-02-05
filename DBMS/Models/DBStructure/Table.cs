@@ -29,7 +29,7 @@ namespace DBMS.Models.DBStructure
         public string FileName { get; set; }
         [DataMember]
         public List<TableColumn> Columns { get; set; }
-
+        
         [IgnoreDataMember]
         public TableColumn PrimaryKey
         {
@@ -117,5 +117,6 @@ namespace DBMS.Models.DBStructure
                 }
             }
         }
+
     }    
 }

@@ -10,27 +10,23 @@ namespace DBMS.Models.DBStructure
     [DataContract]
     public class Index : DBMSEntity
     {
+        [DataMember]
         public Table RefTable { get; set; }
+        [DataMember]
         public TableColumn RefColumn { get; set; }
 
         private string filename = null;
+        [DataMember]
         public string Filename
         {
             get
             {
-                if (string.IsNullOrEmpty(filename))
-                {
-                    if (!string.IsNullOrEmpty(RefTable.TableName) && !string.IsNullOrEmpty(RefColumn.Name))
-                    {
-                        filename = string.Format("index_{0}_{1}.{2}.dbms", 
-                            Guid.NewGuid().ToString(), 
-                            RefTable.TableName,
-                            RefColumn.Name);
-                    }
-                }
                 return filename;
             }
-            set { }
+            set
+            {
+                filename = value;
+            }
         }
     }
 }

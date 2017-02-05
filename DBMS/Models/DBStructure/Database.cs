@@ -29,7 +29,23 @@ namespace DBMS.Models.DBStructure
         }
         [DataMember]
         public List<Table> Tables { get; set; }
-        [DataMember]        
-        public List<Index> Indexes { get; set; }
+        [DataMember]
+        public List<Index> Indexes
+        {
+            get
+            {
+                if (this.indexses == null)
+                    this.indexses = new List<Index>();
+                return indexses;
+            }
+            set
+            {
+                this.indexses = value;
+            }
+        }
+
+
+        [IgnoreDataMember]
+        private List<Index> indexses;
     }
 }

@@ -5,13 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DBMS"
         mc:Ignorable="d"
-        Title="Insert into table" Height="432.839" Width="530.72">
+        Title="Insert into table" Height="438.341" Width="530.72">
     <Grid>
-        <DataGrid x:Name="dataGridInsertTable" Margin="10,34,10,204" AutoGenerateColumns="False" ItemsSource="{Binding}"/>
-        <Button x:Name="btnInsertRows" Content="Insert" Margin="0,0,10,10" Click="btnInsertRows_Click" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75"/>
-        <DataGrid x:Name="dataGridInsertedRecords" Margin="10,0,10,45" Height="116" VerticalAlignment="Bottom"/>
-        <Label x:Name="label" Content="Inserted records:" HorizontalAlignment="Left" Margin="10,0,0,166" VerticalAlignment="Bottom"/>
+        <DataGrid x:Name="dataGridInsertTable" Margin="10,34,10,83" AutoGenerateColumns="False" ItemsSource="{Binding}"/>
+        <Button x:Name="btnInsertRows" Content="Insert" Margin="0,0,10,39" Click="btnInsertRows_Click" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75"/>
         <Label x:Name="label1" Content="Values to insert:" HorizontalAlignment="Left" Margin="10,3,0,0" VerticalAlignment="Top"/>
+        <StatusBar HorizontalAlignment="Left" Height="29" Margin="0,373,0,0" VerticalAlignment="Top" Width="513">
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock x:Name="statusText"></TextBlock>
+            </StatusBarItem>
+        </StatusBar>
 
     </Grid>
 </Window>

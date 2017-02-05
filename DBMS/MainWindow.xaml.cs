@@ -73,12 +73,26 @@ namespace DBMS
                             columnItem.Header = column.Name;
                             columnItem.Tag = column;
                             columnsItem.Items.Add(columnItem);                            
-                        }
+                        }                        
                         tableItem.Items.Add(columnsItem);
 
                         dbTablesItem.Items.Add(tableItem);
                     }
-                    dbItem.Items.Add(dbTablesItem);
+
+                    TreeViewItem indexesItem = new TreeViewItem();
+                    indexesItem.Header = "Indexes";
+                    indexesItem.Tag = database.Indexes;
+                    foreach (var index in database.Indexes)
+                    {
+                        TreeViewItem indexItem = new TreeViewItem();
+                        indexItem.Header = String.Format("{0}_{1}.{2}", index.RefTable.TableName, index.RefColumn.Name, index.Filename);
+                        indexItem.Tag = index;
+                        indexesItem.Items.Add(indexItem);
+                    }
+
+                    dbItem.Items.Add(indexesItem);
+
+                    dbItem.Items.Add(dbTablesItem);                    
                     treeView.Items.Add(dbItem);
                 }
                 
@@ -98,7 +112,6 @@ namespace DBMS
             {
                 db = window.DatabaseSchema;
                 db.Tables = new List<Models.DBStructure.Table>();
-                db.Indexes = new List<Index>();
             }
             List<DBMSDatabase> databases = null;
             DBMSResult res = SchemaSerializer.LoadDatabases();
@@ -213,6 +226,7 @@ namespace DBMS
         private DataTable resultTable = new DataTable();
         private void SelectTopItem_Click(object sender, RoutedEventArgs e)
         {                        
+
             KVManagement.DatabaseMgr mgr = new DatabaseMgr(String.Format("{0}\\{1}", SelectedDatabase.FolderName, SelectedTable.FileName));
             mgr.Open();
             DBMSResult res = mgr.GetTopN<string>(10);
@@ -263,8 +277,8 @@ namespace DBMS
             WindowCreateIndex window = new WindowCreateIndex(SelectedTable);
             if (window.ShowDialog() == true)
             {
-                CurrentDatabases.FirstOrDefault(r => r.DatabaseName == SelectedDatabase.DatabaseName).Indexes.Add(window.IndexSchema);
-                SchemaSerializer.SaveDatabases(CurrentDatabases);
+                SelectedDatabase.Indexes.Add(window.IndexSchema);
+                SchemaSerializer.SaveDatabases(CurrentDatabases);                
                 FillTreeView();
             }
 

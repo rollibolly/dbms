@@ -26,42 +26,16 @@ namespace DBMS
     {
         private MainWindow parent;
         private DataTable table;
-
-        public class KV
-        {
-            public string Key { get; set; }
-            public string Value { get; set; }
-            public KV() { }
-            public KV(string key, string value)
-            {
-                Key = key;
-                Value = value;
-            }
-        }
-
-        private ObservableCollection<KV> insertedRecords;        
+ 
         public WindowInsertIntoTable(MainWindow parent)
         {
-            InitializeComponent();
-            insertedRecords = new ObservableCollection<KV>();            
+            InitializeComponent();           
             this.parent = parent;
             InitGrid();            
         }        
         
         private void InitGrid()
-        {
-            dataGridInsertedRecords.AutoGenerateColumns = false;
-            DataGridTextColumn keyColumn = new DataGridTextColumn();
-            keyColumn.Header = "KEY";
-            keyColumn.Binding = new Binding("Key");
-            dataGridInsertedRecords.Columns.Add(keyColumn);
-            DataGridTextColumn valueColumn = new DataGridTextColumn();
-            valueColumn.Header = "VALUE";
-            valueColumn.Binding = new Binding("Value");
-            dataGridInsertedRecords.Columns.Add(valueColumn);
-
-            dataGridInsertedRecords.ItemsSource = insertedRecords;
-
+        {            
             table = new DataTable();
             foreach (var item in parent.SelectedTable.Columns)
             {
@@ -83,72 +57,28 @@ namespace DBMS
 
         private void btnInsertRows_Click(object sender, RoutedEventArgs e)
         {
-            insertedRecords.Clear();
-            DatabaseMgr mgr = new DatabaseMgr(String.Format("{0}\\{1}",parent.SelectedDatabase.FolderName,parent.SelectedTable.FileName));
-            DBMSResult res = mgr.Open();
-            string keyStr = null;
-            string valuesStr = null;
-            if (!res.Success)
+            DateTime start = DateTime.Now;
+            int rowsAffected = 0;    
+            List<string> gridHeaders = dataGridInsertTable.Columns.Select(r => r.Header as string).ToList();
+            foreach (DataRow row in table.Rows)
             {
-                MessageBox.Show(res.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-            if (parent.SelectedTable.PrimaryKey != null)
-            {
-                Dictionary<string, int> headers = dataGridInsertTable.Columns.Select(r => r).ToDictionary(r =>  r.Header as string, r => r.DisplayIndex);
-                int indexOfPK = headers[parent.SelectedTable.PrimaryKey.Name];
-                foreach (DataRow row in table.Rows)
+                try
                 {
-                    
-                    List<string> values = new List<string>();
-                    for (int i = 0; i < row.ItemArray.Count(); ++i)
+                    Dictionary<string, object> columnsValues = new Dictionary<string, object>();
+                    foreach (string header in gridHeaders)
                     {
-                        if (i != indexOfPK)
-                        {
-                            values.Add(row.ItemArray[i] as string);
-                        }
+                        columnsValues.Add(header, row[header]);
                     }
-                    keyStr = row[parent.SelectedTable.PrimaryKey.Name] as string;
-                    valuesStr = String.Join("|", values);
-                    res = mgr.Put(keyStr, valuesStr);
-                    if (!res.Success)
-                    {
-                        MessageBox.Show(res.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        return;
-                    }                    
-                    insertedRecords.Add(new KV(keyStr, valuesStr));
+                    rowsAffected += DatabaseMgr.Insert(parent.SelectedDatabase, parent.SelectedTable, columnsValues);
                 }
-            }
-            else
-            {                
-                foreach (DataRow row in table.Rows)
+                catch(Exception ex)
                 {
 
-                    List<string> values = new List<string>();
-                    for (int i = 0; i < row.ItemArray.Count(); ++i)
-                    {
-                        values.Add(row.ItemArray[i] as string);
-                    }
-                    keyStr = Guid.NewGuid().ToString();
-                    valuesStr = String.Join("|", values);
-                    res = mgr.Put(keyStr, valuesStr);
-                    if (!res.Success)
-                    {
-                        MessageBox.Show(res.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        return;
-                    }
-                    insertedRecords.Add(new KV(keyStr, valuesStr));
                 }
             }
-
-            table.Clear();
-
-            res = mgr.Close();
-            if (!res.Success)
-            {
-                MessageBox.Show(res.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            table.Rows.Clear();
+            TimeSpan ellapsed = DateTime.Now.Subtract(start);
+            statusText.Text = string.Format("Rows affected: {0} Execution time: {1} ms", rowsAffected, ellapsed.Milliseconds);            
         }
     }
 }

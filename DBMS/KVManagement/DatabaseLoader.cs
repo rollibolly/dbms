@@ -7,6 +7,7 @@ using BerkeleyDB;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using DBMS.Utilities;
+using DBMS.Models.DBStructure;
 
 namespace DBMS.KVManagement
 {
@@ -125,5 +126,64 @@ namespace DBMS.KVManagement
             }
         }
         #endregion
+        public static int Insert(DBMSDatabase dbSchema, Table tableSchema, Dictionary<string, object> columnValues)
+        {
+            return Insert(dbSchema, tableSchema, new List<Dictionary<string, object>> { columnValues });
+        }
+        public static int Insert(DBMSDatabase dbSchema, Table tableSchema, List<Dictionary<string, object>> columnValues)
+        {
+            int rowsAffected = 0;
+            DatabaseMgr mgr = new DatabaseMgr(String.Format("{0}\\{1}", dbSchema.FolderName, tableSchema.FileName));
+            DBMSResult res = mgr.Open();            
+            if (!res.Success)
+            {
+                throw new IOException("Can not open database file");
+            }
+
+            // Buildin the key and value strings for berkley db
+            List<string> orderedColumns = tableSchema.Columns.OrderBy(r => r.Order).Where(r => !r.IsPrimaryKey).Select(r => r.Name).ToList();
+
+            foreach (Dictionary<string, object> row in columnValues)
+            {
+                List<string> valuesList = new List<string>();
+
+                string keyStr = null;
+                string valueStr = null;
+                if (tableSchema.PrimaryKey == null)
+                {
+                    keyStr = Guid.NewGuid().ToString();
+                }
+                else
+                {
+                    keyStr = row[tableSchema.PrimaryKey.Name].ToString();
+                    row.Remove(tableSchema.PrimaryKey.Name);
+                }
+
+                foreach (string columnName in orderedColumns)
+                {
+                    if (row.ContainsKey(columnName))
+                    {
+                        valuesList.Add(row[columnName].ToString());
+                    }
+                    else
+                    {
+                        valuesList.Add("");
+                    }
+                }
+                valueStr = string.Join("|", valuesList);
+                res = mgr.Put(keyStr, valueStr);
+                if (!res.Success)
+                {
+                    throw new ArgumentException(string.Format("Can not insert Key: [{0}] Value: [{1}]", keyStr, valueStr));                    
+                }
+                rowsAffected++;
+            }
+            res = mgr.Close();
+            if (!res.Success)
+            {
+                throw new IOException("Can not close database file");
+            }
+            return rowsAffected;
+        }
     }
 }

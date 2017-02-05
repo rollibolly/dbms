@@ -40,7 +40,7 @@ namespace DBMS
                 IndexSchema = new Index();
                 IndexSchema.RefTable = table;
                 IndexSchema.RefColumn = listBoxClumns.SelectedItem as Models.DBStructure.TableColumn;
-                string fname = IndexSchema.Filename;
+                IndexSchema.Filename = string.Format("{0}.index.dbms", Guid.NewGuid().ToString());
                 DialogResult = true;
                 this.Close();
             }
