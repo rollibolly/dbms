@@ -83,6 +83,9 @@
     <Compile Include="WindowInsertIntoTable.xaml.cs">
       <DependentUpon>WindowInsertIntoTable.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WindowQueryDesigner.xaml.cs">
+      <DependentUpon>WindowQueryDesigner.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WindowResultView.xaml.cs">
       <DependentUpon>WindowResultView.xaml</DependentUpon>
     </Compile>
@@ -112,6 +115,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="WindowInsertIntoTable.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WindowQueryDesigner.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

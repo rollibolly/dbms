@@ -486,7 +486,8 @@ namespace DBMS
 
         private void btnQueryDesigner_Click(object sender, RoutedEventArgs e)
         {
-
+            WindowQueryDesigner window = new WindowQueryDesigner();
+            window.Show();
         }
     }
 }
