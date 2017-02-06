@@ -5,18 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DBMS"
         mc:Ignorable="d"
-        Title="Query Designer" Height="400" Width="500">
+        Title="Query Designer" Height="400" Width="500" Loaded="Window_Loaded">
     <Grid>
-        <TabControl x:Name="tabControl" HorizontalAlignment="Left" Height="125" VerticalAlignment="Top" Width="494" Margin="0,0,-0.4,0">
-            <TabItem Header="Add tables">
-                <Grid Background="#FFE5E5E5">
-                    <TextBlock x:Name="textBlock" HorizontalAlignment="Left" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="87" Width="489" Margin="0,0,-0.2,0"/>
-                </Grid>
-            </TabItem>
-        </TabControl>
-        <Button x:Name="btnAddTable" HorizontalAlignment="Left" Margin="342,147,0,0" VerticalAlignment="Top" Width="121">
-            <Button x:Name="button1" Content="Add selected table
-                    " Height="20" Width="111"/>
-        </Button>
+        <Label x:Name="label" Content="Select database:" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="1.052,1.055" Margin="10,10,0,0"/>
+        <ComboBox x:Name="comboBoxDBs" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="111,13,0,0" SelectionChanged="comboBoxTables_SelectionChanged"/>
+        <Button x:Name="btnAddTable" Content="Add table
+                " HorizontalAlignment="Left" Margin="169,98,0,0" VerticalAlignment="Top" Width="62" Click="btnAddTable_Click_1"/>
+        <Label x:Name="label1" Content="Select table:" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.427,0.016" Width="96"/>
+        <ComboBox x:Name="comboBoxTables" HorizontalAlignment="Left" Margin="111,44,0,0" VerticalAlignment="Top" Width="120"/>
+        <TextBox x:Name="textBlockTables" HorizontalAlignment="Left" Height="285" Margin="290,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="194"/>
+        <GroupBox x:Name="groupBox" Header="" HorizontalAlignment="Left" Margin="10,-4,0,0" VerticalAlignment="Top" Height="148" Width="265"/>
+        <GroupBox x:Name="groupBox1" Header="GroupBox" HorizontalAlignment="Left" Margin="10,164,0,0" VerticalAlignment="Top" Width="265" Height="196">
+            <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="71" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="220"/>
+        </GroupBox>
     </Grid>
 </Window>
