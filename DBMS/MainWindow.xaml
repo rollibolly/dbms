@@ -22,7 +22,7 @@
         </RichTextBox>
         <DataGrid x:Name="dataGridResult" AutoGenerateColumns="False" Margin="268,504,10,48"/>
         <Button x:Name="btnExecuteQuery" Content="Execute" Margin="0,459,10,0" VerticalAlignment="Top" Click="btnExecuteQuery_Click" HorizontalAlignment="Right" Width="75"/>
-        <StatusBar x:Name ="statusBar" Height="29" Margin="0,733,5,0" VerticalAlignment="Top">
+        <StatusBar x:Name ="statusBar" Margin="0,0,5,10" Height="29" VerticalAlignment="Bottom">
             <StatusBarItem HorizontalAlignment="Right">
                 <TextBlock Name="statusMessage" HorizontalAlignment="Right"/>
             </StatusBarItem>

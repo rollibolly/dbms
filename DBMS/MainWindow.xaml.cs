@@ -304,8 +304,15 @@ namespace DBMS
                     MessageBox.Show(String.Format("Table with name: {0} already exists", window.TableSchema.TableName), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-                CurrentDatabases.FirstOrDefault(r => r.DatabaseName == SelectedDatabase.DatabaseName).Tables.Add(window.TableSchema);
-                SchemaSerializer.SaveDatabases(CurrentDatabases);
+                UICommand command = new UICommand();
+                command.Command = Utilities.CommandType.CREATE;
+                command.Entity = Utilities.EntityType.TABLE;
+                command.TableNames.Add(window.TableSchema.TableName);
+                command.Columns = window.TableSchema.Columns;
+                DataTable dt;
+                DatabaseMgr.ExecuteCommand(SelectedDatabase, command, out dt);
+                //CurrentDatabases.FirstOrDefault(r => r.DatabaseName == SelectedDatabase.DatabaseName).Tables.Add(window.TableSchema);
+                //SchemaSerializer.SaveDatabases(CurrentDatabases);
                 FillTreeView();
             }            
         }
@@ -475,6 +482,11 @@ namespace DBMS
         private void btnRefresh_Click(object sender, RoutedEventArgs e)
         {
             FillTreeView();
+        }
+
+        private void btnQueryDesigner_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

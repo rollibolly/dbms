@@ -201,7 +201,18 @@ namespace DBMS.KVManagement
                             newTable.Columns = new List<TableColumn>();
                             foreach (var item in command.Columns)
                             {
-                                newTable.Columns.Add(item);
+                                newTable.Columns.Add(item);                                
+                            }
+                            foreach(var item in newTable.Columns)
+                            {
+                                if (item.IsUnique) // TODO find solutions for FK
+                                {
+                                    Index index = new Index();
+                                    index.Filename = string.Format("{0}.index.dbms", Guid.NewGuid().ToString());
+                                    index.RefColumn = item;
+                                    index.RefTable = newTable;
+                                    databases.Where(r => r.DatabaseName == dbSchema.DatabaseName).FirstOrDefault().Indexes.Add(index);
+                                }
                             }
                             databases.Where(r => r.DatabaseName == dbSchema.DatabaseName).FirstOrDefault().Tables.Add(newTable);
                             SchemaSerializer.SaveDatabases(databases);
