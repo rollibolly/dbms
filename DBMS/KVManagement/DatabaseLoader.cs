@@ -15,7 +15,7 @@ namespace DBMS.KVManagement
 {
     public class DatabaseMgr
     {
-        private BTreeDatabase database;
+        public BTreeDatabase database;
         private BTreeDatabaseConfig config;
         public string DBFileName { get; set; }
 
@@ -59,7 +59,11 @@ namespace DBMS.KVManagement
             {
                 return DBMSResult.FAILURE(ex.Message);
             }           
-        }        
+        }
+        public void Remove(DatabaseEntry key)
+        {            
+            database.Delete(key);
+        }
         public DBMSResult Get(object keyObj)        
         {
             try
@@ -186,6 +190,22 @@ namespace DBMS.KVManagement
                             SchemaSerializer.SaveDatabases(databases);
                             return 1;
                         case Utilities.EntityType.INDEX:
+                            commandResult = SchemaSerializer.LoadDatabases();
+                            if (!commandResult.Success || commandResult.Data == null)
+                            {
+                                databases = new List<DBMSDatabase>();
+                            }
+                            else
+                            {
+                                databases = (List<DBMSDatabase>)commandResult.Data;
+                            }
+                            Table tableForIndex = dbSchema.Tables.Where(r => r.TableName == command.TableNames[0]).First();
+                            Index newIndex = new Index();
+                            newIndex.Filename = command.IndexName;
+                            newIndex.RefColumn = tableForIndex.Columns.Where(r => r.Name == command.Columns[0].Name).First();
+                            newIndex.RefTable = tableForIndex;
+                            databases.Where(r => r.DatabaseName == dbSchema.DatabaseName).First().Indexes.Add(newIndex);
+                            SchemaSerializer.SaveDatabases(databases);
                             return 0;
                         case Utilities.EntityType.TABLE:
                             commandResult = SchemaSerializer.LoadDatabases();
@@ -274,6 +294,22 @@ namespace DBMS.KVManagement
                     Table tableSchema = dbSchema.Tables.Where(r => r.TableName == command.TableNames[0].Trim()).FirstOrDefault();
                     return DatabaseMgr.Insert(dbSchema, tableSchema, columnValues);
                 case Utilities.CommandType.DELETE:
+                    commandResult = SchemaSerializer.LoadDatabases();
+                    if (!commandResult.Success || commandResult.Data == null)
+                    {
+                        databases = new List<DBMSDatabase>();
+                    }
+                    else
+                    {
+                        databases = (List<DBMSDatabase>)commandResult.Data;
+                    }                    
+                    Table tblForDelete = databases.Where(r => r.DatabaseName == dbSchema.DatabaseName).FirstOrDefault().Tables.Where(r => r.TableName == command.TableNames[0]).FirstOrDefault();
+                    int ra = DatabaseMgr.Delete(dbSchema, tblForDelete, command.WhereClauses);
+                    resultTable = new DbmsTableResult();
+                    resultTable.Headers.Add("Result");
+                    object[] res = resultTable.NewRow();
+                    res[0] = string.Format("Rows affected {0}", ra);
+                    resultTable.Rows.Add(res);
                     return 0;
                 case Utilities.CommandType.SELECT:
                     List<string> columnNames = command.Columns.Select(r => r.Name).ToList();
@@ -286,6 +322,58 @@ namespace DBMS.KVManagement
                     return -1;
             }
         }
+        
+
+        public static int Delete(DBMSDatabase dbSchema, Table tableSchema, List<WhereClause> clauses)
+        {
+            int affectedRows = 0;
+            DatabaseMgr tableMgr = new DatabaseMgr(String.Format("{0}\\{1}", dbSchema.FolderName, tableSchema.FileName));
+            tableMgr.Open();
+            // If there are no conditions than burn the whole table
+            if (clauses == null || clauses.Count() == 0)
+            {
+                BTreeCursor cursor = tableMgr.database.Cursor();
+                while (cursor.MoveNext())
+                {
+                    tableMgr.Remove(cursor.Current.Key);
+                    affectedRows++;
+                }
+                cursor.Close();
+                tableMgr.Close();
+                return affectedRows;
+            }            
+
+            // First get all index files for this table
+            List<Index> tableIndexes = dbSchema.Indexes.Where(r => r.RefTable.TableName == tableSchema.TableName).ToList();
+            Dictionary<string, DatabaseMgr> indexManagers = new Dictionary<string, DatabaseMgr>();
+            foreach (Index index in tableIndexes)
+            {
+                indexManagers.Add(index.RefColumn.Name, new DatabaseMgr(String.Format("{0}\\{1}", dbSchema.FolderName, index.Filename)));
+            }
+
+            // Determining PK if any
+            string pkName = null;
+            if (tableSchema.PrimaryKey != null)
+            {
+                pkName = tableSchema.PrimaryKey.Name;
+            }
+  
+            // iterating trough Where clauses          
+            foreach (WhereClause clause in clauses)
+            {
+                // if condition is set on PK
+                if (clause.LeftValue == pkName)
+                {
+
+                }
+                else if (indexManagers.ContainsKey(clause.LeftValue))
+                {
+
+                }
+            }
+            return affectedRows;
+        }
+
         public static DbmsTableResult Select(DBMSDatabase dbSchema, Table tableSchema, List<string> columns, uint? offset, uint? limit)
         {
             DbmsTableResult resultTable = new DbmsTableResult();

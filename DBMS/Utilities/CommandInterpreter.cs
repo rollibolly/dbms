@@ -28,7 +28,7 @@ namespace DBMS.Utilities
                     break;
                 case "index":
                     command.Entity = EntityType.INDEX;
-                    pattern = @"create " + entity.ToLower() + @"(.*) (on) ([a-zA-Z]+) \(([a-zA-Z]+\))";
+                    pattern = @"create " + entity.ToLower() + @"(.*) (on) ([a-zA-Z_]+) \(([a-zA-Z_]+\))";
                     id = 2;
                     command.Success = true;
                     break;
@@ -292,34 +292,52 @@ namespace DBMS.Utilities
             return command;
         }
 
-        public UICommand InterpretCommand(string sqltext)
+        public List<UICommand> InterpretCommand(string sqltext)
         {
-            UICommand command = new UICommand();
-            string[] item = sqltext.Split(' ');
-
-            switch (item[0].ToLower())
+            string[] queries = sqltext.Split(';');
+            List<UICommand> commandList = new List<UICommand>();
+            foreach (string query in queries)
             {
-                case "create":
-                    command = CreateQuery(sqltext: sqltext, entity: item[1]);
-                    break;
-                case "select":
-                    command = SelectQuery(sql: sqltext);
-                    break;
-                case "insert":
-                    command = InsertQuery(insertString: sqltext);
-                    break;
-                case "delete":
-                    command = DeleteQuery(sqltext);
-                    break;
-                case "drop":
-                    command =  DropTable(sqltext: sqltext, entity: item[1]);
-                    break;
-                default:
-                    //Console.WriteLine("Incorrect sql syntax!");
-                    break;
+                UICommand command = null;
+                string subQuery = query.Trim();
+                string[] item = subQuery.Split(' ');
+
+                switch (item[0].ToLower())
+                {
+                    case "create":
+                        command = CreateQuery(sqltext: subQuery, entity: item[1]);
+                        break;
+                    case "select":
+                        command = SelectQuery(sql: subQuery);
+                        break;
+                    case "insert":
+                        command = InsertQuery(insertString: subQuery);
+                        break;
+                    case "delete":
+                        command = DeleteQuery(subQuery);
+                        break;
+                    case "drop":
+                        command = DropTable(sqltext: subQuery, entity: item[1]);
+                        break;
+                    default:
+                        //Console.WriteLine("Incorrect sql syntax!");
+                        break;
+                }
+                if (command != null)
+                {
+                    commandList.Add(command);
+                }
+            }
+            foreach (UICommand cmd in commandList)
+            {
+                if (!cmd.Success)
+                {
+                    throw new Exception(String.Format("Error [{0}]", cmd.ErrorMessage));
+                }
             }
 
-            return command;
+            return commandList;
         }
+        
     }
 }

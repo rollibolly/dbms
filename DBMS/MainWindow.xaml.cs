@@ -444,10 +444,16 @@ namespace DBMS
             try
             {
                 CommandInterpreter ci = new CommandInterpreter();
-                UICommand ui = ci.InterpretCommand(query);
-                DbmsTableResult resTable = null;
-                MessageBox.Show(ui.ToString());
-                DatabaseMgr.ExecuteCommand(comboBoxSelectedDatabase.SelectedItem as DBMSDatabase, ui, out resTable);
+                List<UICommand> commands = ci.InterpretCommand(query);
+                DbmsTableResult resTable = null;                
+                if (commands != null)
+                {
+                    foreach (UICommand ui in commands)
+                    {
+                        //MessageBox.Show(ui.ToString());
+                        DatabaseMgr.ExecuteCommand(comboBoxSelectedDatabase.SelectedItem as DBMSDatabase, ui, out resTable);
+                    }
+                }                
                 if (resTable != null)
                     FillResultView(resTable);
             } 

@@ -27,8 +27,22 @@ namespace DBMS.Utilities
     public class WhereClause
     {
         public string LeftValue { get; set; }
-        public string Operator { get; set; }
+        public string Operator { get; set; } // =|<>|<|>|<=|>=
         public string RightValue { get; set; }
+        public bool IsColumnRight
+        {
+            get { return IsColumn(RightValue); }            
+        }
+        public bool IsColumnLeft
+        {
+            get { return IsColumn(LeftValue); }
+        }
+        private bool IsColumn(string value)
+        {
+            if (value.Split('.').Count() == 2)
+                return true;
+            return false;
+        }
     }
 
     public class UICommand
