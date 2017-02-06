@@ -9,6 +9,7 @@ using System.IO;
 using DBMS.Utilities;
 using DBMS.Models.DBStructure;
 using System.Data;
+using DBMS.Models;
 
 namespace DBMS.KVManagement
 {
@@ -158,7 +159,7 @@ namespace DBMS.KVManagement
         }
         #endregion
 
-        public static int ExecuteCommand(DBMSDatabase dbSchema, UICommand command, out DataTable resultTable)
+        public static int ExecuteCommand(DBMSDatabase dbSchema, UICommand command, out DbmsTableResult resultTable)
         {
             List<DBMSDatabase> databases = null;
             resultTable = null;
@@ -285,15 +286,25 @@ namespace DBMS.KVManagement
                     return -1;
             }
         }
-        public static DataTable Select(DBMSDatabase dbSchema, Table tableSchema, List<string> columns, uint? offset, uint? limit)
+        public static DbmsTableResult Select(DBMSDatabase dbSchema, Table tableSchema, List<string> columns, uint? offset, uint? limit)
         {
-            DataTable resultTable = new DataTable();
+            DbmsTableResult resultTable = new DbmsTableResult();
             DatabaseMgr mgr = new DatabaseMgr(String.Format("{0}\\{1}", dbSchema.FolderName, tableSchema.FileName));
             mgr.Open();
             List<string> orderedColumnNames = tableSchema.Columns.OrderBy(r => r.Order).Select(r => r.Name).ToList();
             foreach (string item in columns)
             {
-                resultTable.Columns.Add(item);
+                if (item == "*")
+                {
+                    foreach (string orderedColumn in orderedColumnNames)
+                    {
+                        resultTable.Headers.Add(orderedColumn);
+                    }
+                }
+                else
+                {
+                    resultTable.Headers.Add(item);
+                }
             }
             string pkName = null;
             int pkOrder = 0;
@@ -308,20 +319,21 @@ namespace DBMS.KVManagement
             {
                 string key = row.Key;
                 string[] values = row.Value.Split('|');
-                DataRow dataRow = resultTable.NewRow();
+                object[] dataRow = resultTable.NewRow();
                 int index = 0;
                 foreach (string orderedColumn in orderedColumnNames)
                 {
                     
-                    if (columns.Contains(orderedColumn))
+                    if (columns.Contains(orderedColumn) || columns.Contains("*"))
                     {
+                        List<int> indexesList = resultTable.IndexesOfHeader(orderedColumn);
                         if (orderedColumn == pkName)
                         {
-                            dataRow[orderedColumn] = key;
+                            AddToObjectRow(dataRow, indexesList, key);                            
                         }
                         else
                         {
-                            dataRow[orderedColumn] = values[index];
+                            AddToObjectRow(dataRow, indexesList, values[index]);                            
                         }
                     }
                     if (pkName != null && pkName != orderedColumn)
@@ -334,7 +346,14 @@ namespace DBMS.KVManagement
             mgr.Close();
             return resultTable;
         }
-
+        private static object[] AddToObjectRow(object[] row, List<int> indexes, object value)
+        {
+            foreach (int index in indexes)
+            {
+                row[index] = value;
+            }
+            return row;
+        }
         public static int Insert(DBMSDatabase dbSchema, Table tableSchema, Dictionary<string, object> columnValues)
         {
             return Insert(dbSchema, tableSchema, new List<Dictionary<string, object>> { columnValues });

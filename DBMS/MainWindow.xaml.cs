@@ -19,7 +19,7 @@ using DBMS.Models.DBStructure;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Text.RegularExpressions;
-
+using DBMS.Models;
 
 namespace DBMS
 {
@@ -309,7 +309,7 @@ namespace DBMS
                 command.Entity = Utilities.EntityType.TABLE;
                 command.TableNames.Add(window.TableSchema.TableName);
                 command.Columns = window.TableSchema.Columns;
-                DataTable dt;
+                DbmsTableResult dt;
                 DatabaseMgr.ExecuteCommand(SelectedDatabase, command, out dt);
                 //CurrentDatabases.FirstOrDefault(r => r.DatabaseName == SelectedDatabase.DatabaseName).Tables.Add(window.TableSchema);
                 //SchemaSerializer.SaveDatabases(CurrentDatabases);
@@ -321,7 +321,7 @@ namespace DBMS
         {
             UICommand cmd = new UICommand();
             cmd.Command = Utilities.CommandType.DROP;
-            DataTable dt;
+            DbmsTableResult dt;
             switch (SelectedEntityType)
             {
                 case Models.DBStructure.EntityType.DATABASE:
@@ -445,7 +445,7 @@ namespace DBMS
             {
                 CommandInterpreter ci = new CommandInterpreter();
                 UICommand ui = ci.InterpretCommand(query);
-                DataTable resTable = null;
+                DbmsTableResult resTable = null;
                 MessageBox.Show(ui.ToString());
                 DatabaseMgr.ExecuteCommand(comboBoxSelectedDatabase.SelectedItem as DBMSDatabase, ui, out resTable);
                 if (resTable != null)
@@ -459,23 +459,23 @@ namespace DBMS
             statusMessage.Text = string.Format("Execution duration: {0} ms", ellapsed.Milliseconds);
         }
 
-        private void FillResultView(DataTable resTable)
+        private void FillResultView(DbmsTableResult resTable)
         {
             dataGridResult.Items.Clear();
             dataGridResult.Columns.Clear();
             int i = 0;
-            foreach (DataColumn item in resTable.Columns)
+            foreach (string item in resTable.Headers)
             {
                 DataGridTextColumn col = new DataGridTextColumn();
-                col.Header = item.ColumnName;
+                col.Header = item;
                 col.Binding = new Binding(string.Format("[{0}]", i));
                 dataGridResult.Columns.Add(col);
                 i++;
             }
 
-            foreach (DataRow resRow in resTable.Rows)
+            foreach (object[] resRow in resTable.Rows)
             {                
-                dataGridResult.Items.Add(resRow.ItemArray);
+                dataGridResult.Items.Add(resRow);
             }
         }
 
