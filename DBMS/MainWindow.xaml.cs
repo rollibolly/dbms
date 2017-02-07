@@ -450,7 +450,7 @@ namespace DBMS
                 {
                     foreach (UICommand ui in commands)
                     {
-                        //MessageBox.Show(ui.ToString());
+                        MessageBox.Show(ui.ToString());
                         DatabaseMgr.ExecuteCommand(comboBoxSelectedDatabase.SelectedItem as DBMSDatabase, ui, out resTable);
                     }
                 }                

@@ -30,7 +30,7 @@ namespace DBMS.KVManagement
             config.PageSize = 8 * 1024;           
         }
         public  DBMSResult Open()
-        {            
+        {                        
             try
             {
                 database = BTreeDatabase.Open(DBFileName, config);
@@ -330,12 +330,12 @@ namespace DBMS.KVManagement
         }
 
         
-        public static bool CheckOp<T>(object left, object right, Operator op)
+        public static bool CheckOp(string left, string right, Operator op, Type type)
         {            
-            if (left is int && right is int)
+            if (type == typeof(int))
             {
-                int lVal = (int)left;
-                int rVal = (int)right;
+                int lVal = Int32.Parse(left);
+                int rVal = Int32.Parse(right);
                 switch (op)
                 {
                     case Operator.EQ:
@@ -354,10 +354,10 @@ namespace DBMS.KVManagement
                         break;
                 }
             }
-            if (left is double && right is double)
+            if (type == typeof(double))
             {
-                double lVal = (double)left;
-                double rVal = (double)right;
+                double lVal = Double.Parse(left);
+                double rVal = Double.Parse(right);
                 switch (op)
                 {
                     case Operator.EQ:
@@ -376,34 +376,143 @@ namespace DBMS.KVManagement
                         break;
                 }
             }
-            if (left is string && right is string)
+            if (type == typeof(string))
             {
-                string lVal = (string)left;
-                string rVal = (string)right;
+                string lVal = left;
+                string rVal = right;
+                int eq = lVal.CompareTo(rVal);
                 switch (op)
                 {
-                    /*
+                    
                     case Operator.EQ:
                         return lVal == rVal;
                     case Operator.LT:
-                        return lVal.Com < rVal;
+                        return eq < 0;
                     case Operator.GT:
-                        return lVal > rVal;
-                    case Operator.LE:
-                        return lVal <= rVal;
+                        return eq > 0;
+                    case Operator.LE:                        
+                        return eq <= 0;
                     case Operator.GE:
-                        return lVal >= rVal;
+                        return eq >= 0;
                     case Operator.NE:
-                        return lVal != rVal;
+                        return eq != 0;
                     default:
-                        break;
-                        */
+                        break;                    
                 }
             }
             return false;
         }
 
-        public static int Delete(DBMSDatabase dbSchema, Table tableSchema, List<WhereClause> clauses)
+        public static List<KeyValuePair<DatabaseEntry, DatabaseEntry>> Where(WhereClause clause, Table tableDef, DatabaseMgr tableMgr, Dictionary<string, DatabaseMgr> indexManagers)
+        {
+            List<KeyValuePair<DatabaseEntry, DatabaseEntry>> resultRows = new List<KeyValuePair<DatabaseEntry, DatabaseEntry>>();
+            List<TableColumn> tableCols = tableDef.Columns.OrderBy(r => r.Order).ToList();
+            TableColumn column = tableCols.Where(r => r.Name == clause.LeftValue).FirstOrDefault();
+            KeyValuePair<DatabaseEntry, DatabaseEntry> row;
+            if (indexManagers.ContainsKey(clause.LeftValue))
+            {
+                // Use the index file
+                DatabaseMgr indexFile = indexManagers[clause.LeftValue];
+                indexFile.Open();                
+                if (clause.OpType == Operator.EQ)
+                {
+                    row = indexFile.GetKV(clause.RightValue);
+                    resultRows.Add(row);
+                    //indexFile.Close();
+                    return resultRows;
+                }
+                else
+                {
+                    BTreeCursor cursor = indexFile.database.Cursor();                                        
+                    while (cursor.MoveNext())
+                    {
+                        string value = tableMgr.FromByteArray<string>(cursor.Current.Key.Data);
+                        Type type = null;
+                        if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                        if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                        if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                        if (DatabaseMgr.CheckOp(value, clause.RightValue, clause.OpType, type))
+                        {
+                            KeyValuePair<DatabaseEntry,DatabaseEntry> subRes = tableMgr.database.Get(cursor.Current.Value);
+                            resultRows.Add(subRes);
+                        }
+                    }
+                    cursor.Close();
+                }
+            }
+            else
+            {            
+                // If the Where condition left value is a Primary key    
+                if (column.IsPrimaryKey)
+                {
+                    if (clause.OpType == Operator.EQ)
+                    {
+                        row = tableMgr.GetKV(clause.RightValue);
+                        resultRows.Add(row);
+                        //tableMgr.Close();
+                        return resultRows;
+                    }
+                    else
+                    {
+                        BTreeCursor cursor = tableMgr.database.Cursor();
+                        while (cursor.MoveNext())
+                        {
+                            string value = tableMgr.FromByteArray<string>(cursor.Current.Key.Data);
+                            Type type = null;
+                            if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                            if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                            if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                            if (DatabaseMgr.CheckOp(value, clause.RightValue, clause.OpType, type))
+                            {
+                                resultRows.Add(new KeyValuePair<DatabaseEntry, DatabaseEntry>(cursor.Current.Key, cursor.Current.Value));
+                            }
+                        }
+                        cursor.Close();
+                    }
+                }
+                else
+                {
+                    BTreeCursor cursor = tableMgr.database.Cursor();
+                    bool hasPk = (tableDef.PrimaryKey != null ? true : false);
+                    while (cursor.MoveNext())
+                    {
+                        string key = tableMgr.FromByteArray<string>(cursor.Current.Key.Data);
+                        string values = tableMgr.FromByteArray<string>(cursor.Current.Value.Data);
+                        string[] rowArray = new string[tableCols.Count];
+                        
+                        string[] valuesArr = values.Split('|');
+                        if (hasPk)
+                        {
+                            rowArray[tableDef.PrimaryKey.Order] = key;
+                            int i = 0;
+                            for (int ind = 0; ind < tableCols.Count; ++ind)
+                            {
+                                if (rowArray[ind] == null)
+                                {
+                                    rowArray[ind] = valuesArr[i];
+                                    i++;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            rowArray = valuesArr;
+                        }
+                        Type type = null;
+                        if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                        if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                        if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                        if (DatabaseMgr.CheckOp(rowArray[column.Order], clause.RightValue, clause.OpType, type))
+                        {
+                            resultRows.Add(new KeyValuePair<DatabaseEntry, DatabaseEntry>(cursor.Current.Key, cursor.Current.Value));
+                        }
+                    }
+                }
+            }
+            return resultRows;
+        }
+
+        public static int Delete(DBMSDatabase dbSchema, Table tableSchema, List<WhereClause> clauses, DatabaseMgr prevRes = null)
         {
             int affectedRows = 0;
             DatabaseMgr tableMgr = new DatabaseMgr(String.Format("{0}\\{1}", dbSchema.FolderName, tableSchema.FileName));
@@ -442,6 +551,17 @@ namespace DBMS.KVManagement
             KeyValuePair<DatabaseEntry,DatabaseEntry> res;
             foreach (WhereClause clause in clauses)
             {
+                List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult = DatabaseMgr.Where(clause, tableSchema, tableMgr, indexManagers);
+                DatabaseMgr tmpDatabase = new DatabaseMgr(string.Format("{0}.temp.dbms", Guid.NewGuid().ToString()));
+                tmpDatabase.Open();
+                foreach (KeyValuePair<DatabaseEntry,DatabaseEntry> entry in subResult)
+                {
+                    tmpDatabase.database.Put(entry.Key, entry.Value);
+                }
+                tableMgr.Close();
+                clauses.Remove(clause);
+                Delete(dbSchema, tableSchema, clauses, tmpDatabase);
+
                 // if condition is set on PK
                 if (clause.LeftValue == pkName)
                 {
@@ -452,86 +572,20 @@ namespace DBMS.KVManagement
                     }
                     else
                     {
-                        BTreeCursor delCursor = tableMgr.database.Cursor();                        
-                        
-                        switch (clause.OpType)
+                        BTreeCursor delCursor = tableMgr.database.Cursor();
+                        Type type = null;
+                        if (pk.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                        if (pk.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                        if (pk.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                        while (delCursor.MoveNext())
                         {
-                            case Operator.LT:
-                                if (pk.DataType == DBMSDataType.INTEGER)
-                                {                                                                        
-                                    while (delCursor.MoveNext())
-                                    {
-                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
-                                        int valueInt = Int32.Parse(valueStr);
-                                        int rightValueInt = Int32.Parse(clause.RightValue);
-                                        if (valueInt < rightValueInt)
-                                        {
-                                            tableMgr.Remove(delCursor.Current.Key);
-                                        }
-                                    }
-                                }
-                                break;
-                            case Operator.GT:
-                                if (pk.DataType == DBMSDataType.INTEGER)
-                                {
-                                    while (delCursor.MoveNext())
-                                    {
-                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
-                                        int valueInt = Int32.Parse(valueStr);
-                                        int rightValueInt = Int32.Parse(clause.RightValue);
-                                        if (valueInt > rightValueInt)
-                                        {
-                                            tableMgr.Remove(delCursor.Current.Key);
-                                        }
-                                    }
-                                }
-                                break;
-                            case Operator.LE:
-                                if (pk.DataType == DBMSDataType.INTEGER)
-                                {
-                                    while (delCursor.MoveNext())
-                                    {
-                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
-                                        int valueInt = Int32.Parse(valueStr);
-                                        int rightValueInt = Int32.Parse(clause.RightValue);
-                                        if (valueInt <= rightValueInt)
-                                        {
-                                            tableMgr.Remove(delCursor.Current.Key);
-                                        }
-                                    }
-                                }
-                                break;
-                            case Operator.GE:
-                                if (pk.DataType == DBMSDataType.INTEGER)
-                                {
-                                    while (delCursor.MoveNext())
-                                    {
-                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
-                                        int valueInt = Int32.Parse(valueStr);
-                                        int rightValueInt = Int32.Parse(clause.RightValue);
-                                        if (valueInt >= rightValueInt)
-                                        {
-                                            tableMgr.Remove(delCursor.Current.Key);
-                                        }
-                                    }
-                                }
-                                break;
-                            case Operator.NE:
-                                if (pk.DataType == DBMSDataType.INTEGER)
-                                {
-                                    while (delCursor.MoveNext())
-                                    {
-                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
-                                        int valueInt = Int32.Parse(valueStr);
-                                        int rightValueInt = Int32.Parse(clause.RightValue);
-                                        if (valueInt != rightValueInt)
-                                        {
-                                            tableMgr.Remove(delCursor.Current.Key);
-                                        }
-                                    }
-                                }
-                                break;
+                            string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);                            
+                            if (DatabaseMgr.CheckOp(valueStr, clause.RightValue, clause.OpType, type))
+                            {
+                                tableMgr.Remove(delCursor.Current.Key);
+                            }                            
                         }
+                        delCursor.Close();                        
                     }
                     
                 }
