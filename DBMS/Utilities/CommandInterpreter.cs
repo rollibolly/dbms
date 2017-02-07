@@ -145,7 +145,7 @@ namespace DBMS.Utilities
             command.Success = true;
             command.Command = CommandType.SELECT;
 
-            var reg = new Regex(@"select (.*) from ([a-z0-9]+,? ?[a-z0-9]+?,? ?[a-z0-9]+?) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9?]'?)?");
+            var reg = new Regex(@"select (.*) from ([a-z0-9]+,? ?[a-z0-9]+?,? ?[a-z0-9]+?,? ?) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)?");
             var colunms = reg.Match(sql).Groups[1].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             var tables = reg.Match(sql).Groups[2].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             

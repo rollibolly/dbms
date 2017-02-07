@@ -149,9 +149,18 @@ namespace DBMS
         private void btnAdd_Click(object sender, RoutedEventArgs e)
         {
             WhereClause wc = new WhereClause();
-            wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).ColumnFullName;
-            wc.Operator = comboBoxOperator.SelectedItem.ToString();
-            Models.DBStructure.TableColumn rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn;
+            Models.DBStructure.TableColumn rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn; ;
+
+            if (comboBoxLeftValue.SelectedIndex == -1)
+            {
+                MessageBox.Show("First you must select an item from the combos!");
+            }
+            else
+            { 
+                wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).ColumnFullName;
+                wc.Operator = comboBoxOperator.SelectedItem.ToString();
+                rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn;
+            }
 
             if (rightValCol != null)
             {
@@ -180,6 +189,33 @@ namespace DBMS
             else
             {
                 comboBoxRightValue.IsEnabled = true;
+            }
+        }
+
+        private void btnViewQuery_Click(object sender, RoutedEventArgs e)
+        {
+            textBoxViewQuery.Text = "SELECT ";
+
+            foreach (var c in selectedColumns)
+            {
+                textBoxViewQuery.Text += c.ColumnFullName + " ";
+            }
+
+            textBoxViewQuery.Text += "\nFROM ";
+
+            foreach (var t in selectedTables)
+            {
+                textBoxViewQuery.Text += t.TableName + " ";
+            }
+
+            if (whereClauses != null)
+            {
+                textBoxViewQuery.Text += "\nWHERE ";
+
+                foreach (var w in whereClauses)
+                {
+                    textBoxViewQuery.Text += w.LeftValue + " " + w.Operator + " " + w.RightValue + "\n";
+                }
             }
         }
     }
