@@ -78,6 +78,12 @@ namespace DBMS.KVManagement
                 return DBMSResult.FAILURE(ex.Message);
             }            
         }
+        public KeyValuePair<DatabaseEntry, DatabaseEntry> GetKV(object keyObj)
+        {
+            DatabaseEntry key = new DatabaseEntry();
+            key.Data = ToByteArray(keyObj);
+            return database.Get(key);                      
+        }
         public DBMSResult Get<T>(uint? offset, uint? limit)
         {
             BTreeCursor cursor = database.Cursor();
@@ -322,7 +328,80 @@ namespace DBMS.KVManagement
                     return -1;
             }
         }
+
         
+        public static bool CheckOp<T>(object left, object right, Operator op)
+        {            
+            if (left is int && right is int)
+            {
+                int lVal = (int)left;
+                int rVal = (int)right;
+                switch (op)
+                {
+                    case Operator.EQ:
+                        return lVal == rVal;                        
+                    case Operator.LT:
+                        return lVal < rVal;                        
+                    case Operator.GT:
+                        return lVal > rVal;
+                    case Operator.LE:
+                        return lVal <= rVal;
+                    case Operator.GE:
+                        return lVal >= rVal;
+                    case Operator.NE:
+                        return lVal != rVal;
+                    default:
+                        break;
+                }
+            }
+            if (left is double && right is double)
+            {
+                double lVal = (double)left;
+                double rVal = (double)right;
+                switch (op)
+                {
+                    case Operator.EQ:
+                        return lVal == rVal;
+                    case Operator.LT:
+                        return lVal < rVal;
+                    case Operator.GT:
+                        return lVal > rVal;
+                    case Operator.LE:
+                        return lVal <= rVal;
+                    case Operator.GE:
+                        return lVal >= rVal;
+                    case Operator.NE:
+                        return lVal != rVal;
+                    default:
+                        break;
+                }
+            }
+            if (left is string && right is string)
+            {
+                string lVal = (string)left;
+                string rVal = (string)right;
+                switch (op)
+                {
+                    /*
+                    case Operator.EQ:
+                        return lVal == rVal;
+                    case Operator.LT:
+                        return lVal.Com < rVal;
+                    case Operator.GT:
+                        return lVal > rVal;
+                    case Operator.LE:
+                        return lVal <= rVal;
+                    case Operator.GE:
+                        return lVal >= rVal;
+                    case Operator.NE:
+                        return lVal != rVal;
+                    default:
+                        break;
+                        */
+                }
+            }
+            return false;
+        }
 
         public static int Delete(DBMSDatabase dbSchema, Table tableSchema, List<WhereClause> clauses)
         {
@@ -353,23 +432,120 @@ namespace DBMS.KVManagement
 
             // Determining PK if any
             string pkName = null;
-            if (tableSchema.PrimaryKey != null)
+            TableColumn pk = tableSchema.PrimaryKey;
+            if (pk != null)
             {
                 pkName = tableSchema.PrimaryKey.Name;
             }
-  
+
             // iterating trough Where clauses          
+            KeyValuePair<DatabaseEntry,DatabaseEntry> res;
             foreach (WhereClause clause in clauses)
             {
                 // if condition is set on PK
                 if (clause.LeftValue == pkName)
                 {
-
+                    if (clause.OpType == Operator.EQ)
+                    {
+                        res = tableMgr.GetKV(clause.RightValue);
+                        tableMgr.Remove(res.Key);
+                    }
+                    else
+                    {
+                        BTreeCursor delCursor = tableMgr.database.Cursor();                        
+                        
+                        switch (clause.OpType)
+                        {
+                            case Operator.LT:
+                                if (pk.DataType == DBMSDataType.INTEGER)
+                                {                                                                        
+                                    while (delCursor.MoveNext())
+                                    {
+                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
+                                        int valueInt = Int32.Parse(valueStr);
+                                        int rightValueInt = Int32.Parse(clause.RightValue);
+                                        if (valueInt < rightValueInt)
+                                        {
+                                            tableMgr.Remove(delCursor.Current.Key);
+                                        }
+                                    }
+                                }
+                                break;
+                            case Operator.GT:
+                                if (pk.DataType == DBMSDataType.INTEGER)
+                                {
+                                    while (delCursor.MoveNext())
+                                    {
+                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
+                                        int valueInt = Int32.Parse(valueStr);
+                                        int rightValueInt = Int32.Parse(clause.RightValue);
+                                        if (valueInt > rightValueInt)
+                                        {
+                                            tableMgr.Remove(delCursor.Current.Key);
+                                        }
+                                    }
+                                }
+                                break;
+                            case Operator.LE:
+                                if (pk.DataType == DBMSDataType.INTEGER)
+                                {
+                                    while (delCursor.MoveNext())
+                                    {
+                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
+                                        int valueInt = Int32.Parse(valueStr);
+                                        int rightValueInt = Int32.Parse(clause.RightValue);
+                                        if (valueInt <= rightValueInt)
+                                        {
+                                            tableMgr.Remove(delCursor.Current.Key);
+                                        }
+                                    }
+                                }
+                                break;
+                            case Operator.GE:
+                                if (pk.DataType == DBMSDataType.INTEGER)
+                                {
+                                    while (delCursor.MoveNext())
+                                    {
+                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
+                                        int valueInt = Int32.Parse(valueStr);
+                                        int rightValueInt = Int32.Parse(clause.RightValue);
+                                        if (valueInt >= rightValueInt)
+                                        {
+                                            tableMgr.Remove(delCursor.Current.Key);
+                                        }
+                                    }
+                                }
+                                break;
+                            case Operator.NE:
+                                if (pk.DataType == DBMSDataType.INTEGER)
+                                {
+                                    while (delCursor.MoveNext())
+                                    {
+                                        string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);
+                                        int valueInt = Int32.Parse(valueStr);
+                                        int rightValueInt = Int32.Parse(clause.RightValue);
+                                        if (valueInt != rightValueInt)
+                                        {
+                                            tableMgr.Remove(delCursor.Current.Key);
+                                        }
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                    
                 }
                 else if (indexManagers.ContainsKey(clause.LeftValue))
                 {
 
                 }
+            }
+
+            // Closing managers
+            tableMgr.Close();
+            foreach (var item in indexManagers.Values)
+            {
+                item.Close();
             }
             return affectedRows;
         }

@@ -6,6 +6,15 @@ using System.Threading.Tasks;
 
 namespace DBMS
 {
+    public enum Operator
+    {
+        EQ,
+        LT,
+        GT,
+        LE,
+        GE,
+        NE
+    }
     class Defines
     {
     }

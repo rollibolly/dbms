@@ -27,8 +27,41 @@ namespace DBMS.Utilities
     public class WhereClause
     {
         public string LeftValue { get; set; }
-        public string Operator { get; set; } // =|<>|<|>|<=|>=
+        private string op;
+        public string Operator
+        {
+            get { return this.op; }
+            set
+            {
+                op = value;
+                switch (op)
+                {
+                    case "=":
+                        OpType = DBMS.Operator.EQ;
+                        break;
+                    case "<":
+                        OpType = DBMS.Operator.LT;
+                        break;
+                    case ">":
+                        OpType = DBMS.Operator.GT;
+                        break;
+                    case "<=":
+                        OpType = DBMS.Operator.LE;
+                        break;
+                    case ">=":
+                        OpType = DBMS.Operator.GE;
+                        break;
+                    case "<>":
+                        OpType = DBMS.Operator.NE;
+                        break;
+                }
+            }
+        } // =|<>|<|>|<=|>=
         public string RightValue { get; set; }
+        public Operator OpType
+        {
+            get;set;
+        }
         public bool IsColumnRight
         {
             get { return IsColumn(RightValue); }            
