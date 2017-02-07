@@ -47,11 +47,6 @@ namespace DBMS
             listBoxWhere.ItemsSource = whereClauses;
         }
 
-        private void btnAddTable_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
         private void comboBoxTables_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             string dbName = comboBoxDBs.SelectedItem.ToString();
@@ -73,29 +68,6 @@ namespace DBMS
             //comboBoxTables.ItemsSource = tables.Select(r => r.TableName).ToList();
         }
 
-        private void btnAddTable_Click_1(object sender, RoutedEventArgs e)
-        {
-            string dbName = comboBoxDBs.SelectedItem.ToString();
-            string tableName = comboBoxTables.SelectedItem.ToString();
-            List<Models.DBStructure.TableColumn> columns = new List<Models.DBStructure.TableColumn>();
-
-            foreach (var d in availableTables)
-            {
-                if (d.TableName == tableName)
-                {
-                    columns = d.Columns;
-                    break;
-                }
-            }
-
-            textBlockTables.Text += "\nTable name:\n" + tableName + "\nColumn names:\n";
-
-            foreach (var item in columns)
-            {
-                textBlockTables.Text += item.Name + "\n";
-            }
-        }
-
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             DBMSResult res = SchemaSerializer.LoadDatabases();
@@ -108,6 +80,7 @@ namespace DBMS
             }
 
             this.comboBoxDBs.ItemsSource = dbNames;
+            this.comboBoxOperator.ItemsSource = Enum.GetValues(typeof(Operator)).Cast<Operator>();
         }
 
         private void listBoxAvailableTables_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -123,6 +96,71 @@ namespace DBMS
                     availableColumns.Add(column);
                 }
             }
+        }
+
+        private void listBoxSelectedTables_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ListBox lb = sender as ListBox;
+            Models.DBStructure.Table selectedTable = lb.SelectedItem as Models.DBStructure.Table;
+
+            if (selectedTable != null)
+            {
+                selectedTables.Remove(selectedTable);
+                availableTables.Add(selectedTable);
+                
+                foreach (Models.DBStructure.TableColumn column in selectedTable.Columns)
+                {
+                    availableColumns.Remove(column);
+                }
+
+                foreach (Models.DBStructure.TableColumn column in selectedTable.Columns)
+                {
+                    selectedColumns.Remove(column);
+                }
+            }
+        }
+
+        private void listBoxAvailableColumns_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ListBox lb = sender as ListBox;
+            Models.DBStructure.TableColumn selectedColumn = lb.SelectedItem as Models.DBStructure.TableColumn;
+
+            if (selectedColumn != null)
+            {
+                selectedColumns.Add(selectedColumn);
+                availableColumns.Remove(selectedColumn);
+            }
+
+            this.comboBoxLeftValue.ItemsSource = selectedColumns.Select(r => r.ColumnFullName).ToList();
+            this.comboBoxRightValue.ItemsSource = selectedColumns.Select(r => r.ColumnFullName).ToList();
+        }
+
+        private void listBoxSelectedColumns_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ListBox lb = sender as ListBox;
+            Models.DBStructure.TableColumn selectedColumn = lb.SelectedItem as Models.DBStructure.TableColumn;
+
+            if (selectedColumn != null)
+            {
+                selectedColumns.Remove(selectedColumn);
+                availableColumns.Add(selectedColumn);
+            }
+
+            this.comboBoxLeftValue.ItemsSource = selectedColumns.Select(r => r.ColumnFullName).ToList();
+            this.comboBoxRightValue.ItemsSource = selectedColumns.Select(r => r.ColumnFullName).ToList();
+        }
+
+        private void btnAdd_Click(object sender, RoutedEventArgs e)
+        {
+            string leftValue = comboBoxLeftValue.SelectedItem.ToString();
+            string op = comboBoxOperator.SelectedItem.ToString();
+            string rightValue = "";
+
+            if (comboBoxRightValue.SelectedIndex > -1)
+            {
+                rightValue = comboBoxRightValue.SelectedItem.ToString();
+            }
+            
         }
     }
 }

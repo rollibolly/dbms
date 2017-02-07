@@ -263,7 +263,7 @@ namespace DBMS.Utilities
             command.Entity = EntityType.TABLE;
 
             sqltext = sqltext.ToLower();
-            string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z0-9]+)? ?(=|<>|<|>|<=|>=)? ?('?[a-z0-9]+'?)?";
+            string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z0-9]+)? ?(=|<>|<|>|<=|>=)? ?('?[a-z0-9]+.?[0-9?]'?)?";
             Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
 
             command.Success = true;

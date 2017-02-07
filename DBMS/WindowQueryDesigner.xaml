@@ -5,61 +5,65 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DBMS"
         mc:Ignorable="d"
-        Title="Query Designer" Height="727.966" Width="925.424" Loaded="Window_Loaded">
+        Title="Query Designer" Height="460.766" Width="925.424" Loaded="Window_Loaded">
     <Grid>
-        <Label x:Name="label" Content="Select database:" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="1.052,1.055" Margin="10,10,0,0"/>
-        <ComboBox x:Name="comboBoxDBs" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="111,13,0,0" SelectionChanged="comboBoxTables_SelectionChanged"/>
-        <Button x:Name="btnAddTable" Content="Add table
-                " HorizontalAlignment="Left" Margin="169,98,0,0" VerticalAlignment="Top" Width="62" Click="btnAddTable_Click_1"/>
-        <Label x:Name="label1" Content="Select table:" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.427,0.016" Width="96"/>
-        <ComboBox x:Name="comboBoxTables" HorizontalAlignment="Left" Margin="111,44,0,0" VerticalAlignment="Top" Width="120"/>
-        <TextBox x:Name="textBlockTables" HorizontalAlignment="Left" Height="285" Margin="290,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="194"/>
-        <GroupBox x:Name="groupBox" Header="" HorizontalAlignment="Left" Margin="10,-4,0,0" VerticalAlignment="Top" Height="148" Width="265"/>
-        <GroupBox x:Name="groupBox1" Header="GroupBox" HorizontalAlignment="Left" Margin="10,164,0,0" VerticalAlignment="Top" Width="265" Height="196">
-            <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="71" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="220"/>
-        </GroupBox>
-        <GroupBox x:Name="groupBoxFrom" Header="From" HorizontalAlignment="Left" Margin="28,396,0,0" VerticalAlignment="Top" Height="246" Width="268">
+        <Label x:Name="label" Content="Select database:" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="1.052,1.055" Margin="10,29,0,0"/>
+        <ComboBox x:Name="comboBoxDBs" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="125,32,0,0" SelectionChanged="comboBoxTables_SelectionChanged"/>
+        <GroupBox x:Name="groupBoxFrom" Header="From" HorizontalAlignment="Left" Margin="2,102,0,0" VerticalAlignment="Top" Height="272" Width="268">
             <Grid>
-                <ListBox x:Name="listBoxAvailableTables" HorizontalAlignment="Left" Margin="10,10,0,5" Width="113" MouseDoubleClick="listBoxAvailableTables_MouseDoubleClick">
+                <ListBox x:Name="listBoxAvailableTables" HorizontalAlignment="Left" Margin="10,37,0,5" Width="113" MouseDoubleClick="listBoxAvailableTables_MouseDoubleClick">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding TableName}"></TextBlock>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <ListBox x:Name="listBoxSelectedTables" Margin="136,10,10,5">
+                <ListBox x:Name="listBoxSelectedTables" Margin="136,36,10,5" MouseDoubleClick="listBoxSelectedTables_MouseDoubleClick">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding TableName}"></TextBlock>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+                <Label x:Name="label1" Content="Available tables:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="113"/>
+                <Label x:Name="label3" Content="Selected tables:" HorizontalAlignment="Left" Margin="136,10,0,0" VerticalAlignment="Top" Width="110"/>
             </Grid>
         </GroupBox>
-        <GroupBox x:Name="groupBoxColumn" Header="Columns" HorizontalAlignment="Left" Margin="328,396,0,0" VerticalAlignment="Top" Height="246" Width="268">
+        <GroupBox x:Name="groupBoxColumn" Header="Columns" HorizontalAlignment="Left" Margin="299,102,0,0" VerticalAlignment="Top" Height="272" Width="268">
             <Grid>
-                <ListBox x:Name="listBoxAvailableColumns" HorizontalAlignment="Left" Margin="10,10,0,5" Width="113">
+                <ListBox x:Name="listBoxAvailableColumns" HorizontalAlignment="Left" Margin="10,35,0,5" Width="113" MouseDoubleClick="listBoxAvailableColumns_MouseDoubleClick">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding ColumnFullName}"></TextBlock>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <ListBox x:Name="listBoxSelectedColumns" Margin="136,10,10,5">
+                <ListBox x:Name="listBoxSelectedColumns" Margin="136,35,10.2,5" MouseDoubleClick="listBoxSelectedColumns_MouseDoubleClick">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding ColumnFullName}"></TextBlock>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+                <Label x:Name="label5" Content="Available columns:" HorizontalAlignment="Left" Margin="13,10,0,0" VerticalAlignment="Top" Width="110"/>
+                <Label x:Name="label4" Content="Selected columns:" HorizontalAlignment="Left" Margin="136,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.089,0.031" Width="109"/>
             </Grid>
         </GroupBox>
-        <GroupBox x:Name="groupBoxWhere" Header="Where" HorizontalAlignment="Left" Margin="618,396,0,0" VerticalAlignment="Top" Height="246" Width="268">
+        <GroupBox x:Name="groupBoxWhere" Header="Where" HorizontalAlignment="Left" Margin="604,102,0,0" VerticalAlignment="Top" Height="272" Width="305">
             <Grid>
-                
+                <ComboBox x:Name="comboBoxLeftValue" HorizontalAlignment="Left" Margin="88,3,0,0" VerticalAlignment="Top" Width="120"/>
+                <Label x:Name="label2" Content="Left value:" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Width="73"/>
+                <Label x:Name="label6" Content="Operator:" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="73"/>
+                <ComboBox x:Name="comboBoxOperator" HorizontalAlignment="Left" Margin="88,35,0,0" VerticalAlignment="Top" Width="120"/>
+                <Label x:Name="label7" Content="Right value:" HorizontalAlignment="Left" Margin="10,68,0,0" VerticalAlignment="Top" Width="73"/>
+                <ComboBox x:Name="comboBoxRightValue" HorizontalAlignment="Left" Margin="88,71,0,0" VerticalAlignment="Top" Width="120"/>
+                <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="88,111,0,0" TextWrapping="Wrap" Text="Enter a value..." VerticalAlignment="Top" Width="120"/>
+                <Label x:Name="label8" Content="or" HorizontalAlignment="Left" Margin="30,108,0,0" VerticalAlignment="Top"/>
+                <Button x:Name="btnAdd" Content="Add" HorizontalAlignment="Left" Margin="234,114,0,0" VerticalAlignment="Top" Width="48" Click="btnAdd_Click"/>
+
             </Grid>
         </GroupBox>
-        <ListBox x:Name="listBoxWhere" HorizontalAlignment="Left" Height="100" Margin="632,526,0,0" VerticalAlignment="Top" Width="240">
+        <ListBox x:Name="listBoxWhere" HorizontalAlignment="Left" Height="97" Margin="617,265,0,0" VerticalAlignment="Top" Width="279">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid Width="200">
@@ -74,7 +78,8 @@
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
-            
         </ListBox>
+        <GroupBox x:Name="groupBox" Header="Databases
+                  " HorizontalAlignment="Left" VerticalAlignment="Top" Height="82" Width="270"/>
     </Grid>
 </Window>
