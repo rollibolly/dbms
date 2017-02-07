@@ -40,10 +40,6 @@ namespace DBMS
             listBoxSelectedColumns.ItemsSource = selectedColumns;
 
             whereClauses = new ObservableCollection<WhereClause>();
-            whereClauses.Add(new WhereClause { LeftValue = "col1", Operator = "=", RightValue = "10" });
-            whereClauses.Add(new WhereClause { LeftValue = "col2", Operator = "=", RightValue = "10" });
-            whereClauses.Add(new WhereClause { LeftValue = "col3", Operator = "=", RightValue = "10" });
-            whereClauses.Add(new WhereClause { LeftValue = "col4", Operator = "=", RightValue = "10" });
             listBoxWhere.ItemsSource = whereClauses;
         }
 
@@ -131,8 +127,8 @@ namespace DBMS
                 availableColumns.Remove(selectedColumn);
             }
 
-            this.comboBoxLeftValue.ItemsSource = selectedColumns.Select(r => r.ColumnFullName).ToList();
-            this.comboBoxRightValue.ItemsSource = selectedColumns.Select(r => r.ColumnFullName).ToList();
+            this.comboBoxLeftValue.ItemsSource = selectedColumns;
+            this.comboBoxRightValue.ItemsSource = selectedColumns;
         }
 
         private void listBoxSelectedColumns_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -146,21 +142,45 @@ namespace DBMS
                 availableColumns.Add(selectedColumn);
             }
 
-            this.comboBoxLeftValue.ItemsSource = selectedColumns.Select(r => r.ColumnFullName).ToList();
-            this.comboBoxRightValue.ItemsSource = selectedColumns.Select(r => r.ColumnFullName).ToList();
+            this.comboBoxLeftValue.ItemsSource = selectedColumns;
+            this.comboBoxRightValue.ItemsSource = selectedColumns;
         }
 
         private void btnAdd_Click(object sender, RoutedEventArgs e)
         {
-            string leftValue = comboBoxLeftValue.SelectedItem.ToString();
-            string op = comboBoxOperator.SelectedItem.ToString();
-            string rightValue = "";
+            WhereClause wc = new WhereClause();
+            wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).ColumnFullName;
+            wc.Operator = comboBoxOperator.SelectedItem.ToString();
+            Models.DBStructure.TableColumn rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn;
 
-            if (comboBoxRightValue.SelectedIndex > -1)
+            if (rightValCol != null)
             {
-                rightValue = comboBoxRightValue.SelectedItem.ToString();
+                wc.RightValue = rightValCol.ColumnFullName;
+            }
+            else
+            {
+                wc.RightValue = textBoxValue.Text;
             }
             
+            whereClauses.Add(wc);
+
+            this.comboBoxLeftValue.SelectedIndex = -1;
+            this.comboBoxRightValue.SelectedIndex = -1;
+            this.comboBoxOperator.SelectedIndex = -1;
+            this.textBoxValue.Text = "";
+        }
+
+        private void textBoxValue_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(textBoxValue.Text))
+            {
+                comboBoxRightValue.IsEnabled = false;
+                comboBoxRightValue.SelectedIndex = -1;
+            }
+            else
+            {
+                comboBoxRightValue.IsEnabled = true;
+            }
         }
     }
 }

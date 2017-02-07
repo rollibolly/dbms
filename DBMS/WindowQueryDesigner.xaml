@@ -51,13 +51,25 @@
         </GroupBox>
         <GroupBox x:Name="groupBoxWhere" Header="Where" HorizontalAlignment="Left" Margin="604,102,0,0" VerticalAlignment="Top" Height="272" Width="305">
             <Grid>
-                <ComboBox x:Name="comboBoxLeftValue" HorizontalAlignment="Left" Margin="88,3,0,0" VerticalAlignment="Top" Width="120"/>
+                <ComboBox x:Name="comboBoxLeftValue" HorizontalAlignment="Left" Margin="88,3,0,0" VerticalAlignment="Top" Width="120">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ColumnFullName}"></TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
                 <Label x:Name="label2" Content="Left value:" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Width="73"/>
                 <Label x:Name="label6" Content="Operator:" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="73"/>
                 <ComboBox x:Name="comboBoxOperator" HorizontalAlignment="Left" Margin="88,35,0,0" VerticalAlignment="Top" Width="120"/>
                 <Label x:Name="label7" Content="Right value:" HorizontalAlignment="Left" Margin="10,68,0,0" VerticalAlignment="Top" Width="73"/>
-                <ComboBox x:Name="comboBoxRightValue" HorizontalAlignment="Left" Margin="88,71,0,0" VerticalAlignment="Top" Width="120"/>
-                <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="88,111,0,0" TextWrapping="Wrap" Text="Enter a value..." VerticalAlignment="Top" Width="120"/>
+                <ComboBox x:Name="comboBoxRightValue" HorizontalAlignment="Left" Margin="88,71,0,0" VerticalAlignment="Top" Width="120">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ColumnFullName}"></TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBox x:Name="textBoxValue" HorizontalAlignment="Left" Height="23" Margin="88,111,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120" TextChanged="textBoxValue_TextChanged"/>
                 <Label x:Name="label8" Content="or" HorizontalAlignment="Left" Margin="30,108,0,0" VerticalAlignment="Top"/>
                 <Button x:Name="btnAdd" Content="Add" HorizontalAlignment="Left" Margin="234,114,0,0" VerticalAlignment="Top" Width="48" Click="btnAdd_Click"/>
 
