@@ -57,11 +57,20 @@ namespace DBMS.Models.DBStructure
             }
             set { }
         } 
+        public void SetColumnsFullName()
+        {
+            foreach (TableColumn col in Columns)
+            {
+                col.ColumnFullName = String.Format("{0}.{1}", TableName, col.Name);
+            }
+        }
     }
 
     [DataContract]
     public class TableColumn:DBMSEntity
     {
+        [IgnoreDataMember]
+        public string ColumnFullName { get; set; }        
         [IgnoreDataMember]
         private string _Name;
         [DataMember]        

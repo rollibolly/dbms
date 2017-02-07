@@ -2,6 +2,7 @@
 using DBMS.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,11 +23,28 @@ namespace DBMS
     public partial class WindowQueryDesigner : Window
     {
         List<DBMSDatabase> databases;
-        List<Models.DBStructure.Table> tables;
-            
+        ObservableCollection<Models.DBStructure.Table> availableTables;
+        ObservableCollection<Models.DBStructure.TableColumn> availableColumns;
+
+        ObservableCollection<Models.DBStructure.Table> selectedTables;
+        ObservableCollection<Models.DBStructure.TableColumn> selectedColumns;
+
+        private ObservableCollection<WhereClause> whereClauses;
+
         public WindowQueryDesigner()
         {
             InitializeComponent();
+            selectedTables = new ObservableCollection<Models.DBStructure.Table>();
+            selectedColumns = new ObservableCollection<Models.DBStructure.TableColumn>();
+            listBoxSelectedTables.ItemsSource = selectedTables;
+            listBoxSelectedColumns.ItemsSource = selectedColumns;
+
+            whereClauses = new ObservableCollection<WhereClause>();
+            whereClauses.Add(new WhereClause { LeftValue = "col1", Operator = "=", RightValue = "10" });
+            whereClauses.Add(new WhereClause { LeftValue = "col2", Operator = "=", RightValue = "10" });
+            whereClauses.Add(new WhereClause { LeftValue = "col3", Operator = "=", RightValue = "10" });
+            whereClauses.Add(new WhereClause { LeftValue = "col4", Operator = "=", RightValue = "10" });
+            listBoxWhere.ItemsSource = whereClauses;
         }
 
         private void btnAddTable_Click(object sender, RoutedEventArgs e)
@@ -41,19 +59,18 @@ namespace DBMS
         }
         
         public void FillComboTables(string dbName)
-        {
-            tables = new List<Models.DBStructure.Table>();
-            
-            foreach (DBMSDatabase d in databases)
+        {            
+            DBMSDatabase selectedDatabase = databases.Where(r => r.DatabaseName == dbName).FirstOrDefault();
+            availableTables = new ObservableCollection<Models.DBStructure.Table>(selectedDatabase.Tables);
+            availableColumns = new ObservableCollection<Models.DBStructure.TableColumn>();
+            foreach (Models.DBStructure.Table tbl in availableTables)
             {
-                if (d.DatabaseName == dbName)
-                {
-                    tables = d.Tables;
-                    break;
-                }
+                tbl.SetColumnsFullName();                
             }
+            listBoxAvailableTables.ItemsSource = availableTables;
+            listBoxAvailableColumns.ItemsSource = availableColumns;
 
-            comboBoxTables.ItemsSource = tables.Select(r => r.TableName).ToList();
+            //comboBoxTables.ItemsSource = tables.Select(r => r.TableName).ToList();
         }
 
         private void btnAddTable_Click_1(object sender, RoutedEventArgs e)
@@ -62,7 +79,7 @@ namespace DBMS
             string tableName = comboBoxTables.SelectedItem.ToString();
             List<Models.DBStructure.TableColumn> columns = new List<Models.DBStructure.TableColumn>();
 
-            foreach (var d in tables)
+            foreach (var d in availableTables)
             {
                 if (d.TableName == tableName)
                 {
@@ -91,6 +108,21 @@ namespace DBMS
             }
 
             this.comboBoxDBs.ItemsSource = dbNames;
+        }
+
+        private void listBoxAvailableTables_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ListBox lb = sender as ListBox;
+            Models.DBStructure.Table selectedTable = lb.SelectedItem as Models.DBStructure.Table;
+            if (selectedTable != null)
+            {
+                selectedTables.Add(selectedTable);
+                availableTables.Remove(selectedTable);
+                foreach (Models.DBStructure.TableColumn column in selectedTable.Columns)
+                {
+                    availableColumns.Add(column);
+                }
+            }
         }
     }
 }

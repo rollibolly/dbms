@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DBMS"
         mc:Ignorable="d"
-        Title="Query Designer" Height="400" Width="500" Loaded="Window_Loaded">
+        Title="Query Designer" Height="727.966" Width="925.424" Loaded="Window_Loaded">
     <Grid>
         <Label x:Name="label" Content="Select database:" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="1.052,1.055" Margin="10,10,0,0"/>
         <ComboBox x:Name="comboBoxDBs" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="111,13,0,0" SelectionChanged="comboBoxTables_SelectionChanged"/>
@@ -18,5 +18,63 @@
         <GroupBox x:Name="groupBox1" Header="GroupBox" HorizontalAlignment="Left" Margin="10,164,0,0" VerticalAlignment="Top" Width="265" Height="196">
             <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="71" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="220"/>
         </GroupBox>
+        <GroupBox x:Name="groupBoxFrom" Header="From" HorizontalAlignment="Left" Margin="28,396,0,0" VerticalAlignment="Top" Height="246" Width="268">
+            <Grid>
+                <ListBox x:Name="listBoxAvailableTables" HorizontalAlignment="Left" Margin="10,10,0,5" Width="113" MouseDoubleClick="listBoxAvailableTables_MouseDoubleClick">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding TableName}"></TextBlock>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <ListBox x:Name="listBoxSelectedTables" Margin="136,10,10,5">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding TableName}"></TextBlock>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </GroupBox>
+        <GroupBox x:Name="groupBoxColumn" Header="Columns" HorizontalAlignment="Left" Margin="328,396,0,0" VerticalAlignment="Top" Height="246" Width="268">
+            <Grid>
+                <ListBox x:Name="listBoxAvailableColumns" HorizontalAlignment="Left" Margin="10,10,0,5" Width="113">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ColumnFullName}"></TextBlock>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <ListBox x:Name="listBoxSelectedColumns" Margin="136,10,10,5">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ColumnFullName}"></TextBlock>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </GroupBox>
+        <GroupBox x:Name="groupBoxWhere" Header="Where" HorizontalAlignment="Left" Margin="618,396,0,0" VerticalAlignment="Top" Height="246" Width="268">
+            <Grid>
+                
+            </Grid>
+        </GroupBox>
+        <ListBox x:Name="listBoxWhere" HorizontalAlignment="Left" Height="100" Margin="632,526,0,0" VerticalAlignment="Top" Width="240">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Width="200">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding LeftValue}" Grid.Column="0"></TextBlock>
+                        <TextBlock Text="{Binding Operator}" Grid.Column="1"></TextBlock>
+                        <TextBlock Text="{Binding RightValue}" Grid.Column="2"></TextBlock>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+            
+        </ListBox>
     </Grid>
 </Window>
