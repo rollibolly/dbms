@@ -145,16 +145,10 @@ namespace DBMS.Utilities
             command.Success = true;
             command.Command = CommandType.SELECT;
 
-            //var reg = new Regex(@"select(.*?)(?<!\w*"")FROM(?!\w*?"")(.*?)");
-            var reg = new Regex(@"select (.*) from (.*)");// (offset?) ([1-9+]?) (limit?) ([1-9]+?)");
+            var reg = new Regex(@"select (.*) from ([a-z0-9]+,? ?[a-z0-9]+?,? ?[a-z0-9]+?) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9?]'?)?");
             var colunms = reg.Match(sql).Groups[1].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             var tables = reg.Match(sql).Groups[2].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-            //string s = reg.Match(sql).Groups[3].Value.ToString();
-            //string q = reg.Match(sql).Groups[4].Value.ToString();
-
-            //var where = reg.Match(sql).Groups[4].Value.Split(new string[] { "&&", "||", "AND", "OR" }, StringSplitOptions.None);
-
+            
             command.Columns = new List<TableColumn>();
 
             foreach (var item in colunms)
@@ -170,7 +164,26 @@ namespace DBMS.Utilities
             {
                 string tablename = item.ToString();
                 string[] stringSeparators = new string[] { "\r" };
-                command.TableNames.Add(tablename.Split(stringSeparators, StringSplitOptions.None).FirstOrDefault().ToString());
+                command.TableNames.Add(tablename.Split(stringSeparators, StringSplitOptions.None).FirstOrDefault().ToString().Trim());
+            }
+            
+            if (reg.Match(sql).Groups[3].ToString() == "where")
+            {
+                if (reg.Match(sql).Groups[4].ToString() == "" || reg.Match(sql).Groups[5].ToString() == "" || reg.Match(sql).Groups[6].ToString() == "")
+                {
+                    command.Success = false;
+                    command.ErrorMessage = "Syntax error! Correct format: 'select ColumnName(S) from TableName where ColumnName operator Value' (where operator can be: '=, <>, <, >, <=, >=')";
+                }
+                else
+                {
+                    command.Success = true;
+                    command.WhereClauses = new List<WhereClause>();
+                    WhereClause wc = new WhereClause();
+                    wc.LeftValue = reg.Match(sql).Groups[4].ToString().Trim();
+                    wc.Operator = reg.Match(sql).Groups[5].ToString().Trim();
+                    wc.RightValue = reg.Match(sql).Groups[6].ToString().Trim();
+                    command.WhereClauses.Add(wc);
+                }
             }
 
             return command;
@@ -263,7 +276,7 @@ namespace DBMS.Utilities
             command.Entity = EntityType.TABLE;
 
             sqltext = sqltext.ToLower();
-            string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9?]'?)?";
+            string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)?";
             Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
 
             command.Success = true;
