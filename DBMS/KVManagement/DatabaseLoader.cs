@@ -549,11 +549,11 @@ namespace DBMS.KVManagement
 
             // iterating trough Where clauses          
             KeyValuePair<DatabaseEntry,DatabaseEntry> res;
+            DatabaseMgr tmpDatabase = new DatabaseMgr(string.Format("{0}.temp.dbms", Guid.NewGuid().ToString()));
+            tmpDatabase.Open();
             foreach (WhereClause clause in clauses)
             {
-                List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult = DatabaseMgr.Where(clause, tableSchema, tableMgr, indexManagers);
-                DatabaseMgr tmpDatabase = new DatabaseMgr(string.Format("{0}.temp.dbms", Guid.NewGuid().ToString()));
-                tmpDatabase.Open();
+                List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult = DatabaseMgr.Where(clause, tableSchema, tableMgr, indexManagers);                                
                 foreach (KeyValuePair<DatabaseEntry,DatabaseEntry> entry in subResult)
                 {
                     tmpDatabase.database.Put(entry.Key, entry.Value);

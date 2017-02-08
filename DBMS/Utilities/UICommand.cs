@@ -23,9 +23,19 @@ namespace DBMS.Utilities
         INDEX,
         DATABASE
     }
-
+    public enum WhereType
+    {
+        OR,
+        AND
+    }
     public class WhereClause
     {
+        private WhereType clauseType;
+        public WhereType ClauseType
+        {
+            get { return clauseType; }
+            set { clauseType = value; }
+        }
         public string LeftValue { get; set; }
         private string op;
         public string Operator
