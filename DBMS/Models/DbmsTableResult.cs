@@ -42,7 +42,7 @@ namespace DBMS.Models
         public object[] NewRow()
         {
             return new object[ColumnCount];
-        }
+        }        
         public List<int> IndexesOfHeader(string header)
         {
             int index = 0;

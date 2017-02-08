@@ -49,7 +49,7 @@
                 <Label x:Name="label4" Content="Selected columns:" HorizontalAlignment="Left" Margin="136,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.089,0.031" Width="109"/>
             </Grid>
         </GroupBox>
-        <GroupBox x:Name="groupBoxWhere" Header="Where" HorizontalAlignment="Left" Margin="604,102,0,0" VerticalAlignment="Top" Height="272" Width="305">
+        <GroupBox x:Name="groupBoxWhere" Header="Where" Margin="604,102,0,0" VerticalAlignment="Top" Height="272" HorizontalAlignment="Left" Width="305">
             <Grid>
                 <ComboBox x:Name="comboBoxLeftValue" HorizontalAlignment="Left" Margin="88,3,0,0" VerticalAlignment="Top" Width="120">
                     <ComboBox.ItemTemplate>
@@ -74,39 +74,39 @@
                 <Button x:Name="btnAdd" Content="Add" HorizontalAlignment="Left" Margin="234,114,0,0" VerticalAlignment="Top" Width="48" Click="btnAdd_Click"/>
                 <RadioButton x:Name="radiobtnAND" Content="AND" HorizontalAlignment="Left" Margin="234,59,0,0" VerticalAlignment="Top" Width="48"/>
                 <RadioButton x:Name="radiobtnOR" Content="OR" HorizontalAlignment="Left" Margin="234,81,0,0" VerticalAlignment="Top"/>
+                <ListBox x:Name="listBoxWhere" HorizontalAlignment="Left" Height="97" Margin="4,143,0,0" VerticalAlignment="Top" Width="279">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Width="200">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding LeftValue}" Grid.Column="0"/>
+                                <TextBlock Text="{Binding Operator}" Grid.Column="1"/>
+                                <TextBlock Text="{Binding RightValue}" Grid.Column="2"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
 
             </Grid>
         </GroupBox>
-        <ListBox x:Name="listBoxWhere" HorizontalAlignment="Left" Height="97" Margin="617,265,0,0" VerticalAlignment="Top" Width="279">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Grid Width="200">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding LeftValue}" Grid.Column="0"></TextBlock>
-                        <TextBlock Text="{Binding Operator}" Grid.Column="1"></TextBlock>
-                        <TextBlock Text="{Binding RightValue}" Grid.Column="2"></TextBlock>
-                    </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
         <GroupBox x:Name="groupBox" Header="Databases
-                  " HorizontalAlignment="Left" VerticalAlignment="Top" Height="97" Width="270"/>
-        <GroupBox x:Name="groupBox1" Header="View select query" HorizontalAlignment="Left" Margin="299,10,0,0" VerticalAlignment="Top" Height="87" Width="610">
+                  " HorizontalAlignment="Left" Width="270" Height="97" VerticalAlignment="Top"/>
+        <GroupBox x:Name="groupBox1" Header="View select query" Margin="299,10,0,0" VerticalAlignment="Top" Height="87" HorizontalAlignment="Left" Width="610">
             <Grid HorizontalAlignment="Left" Height="68" Margin="0,0,-3.2,-4" VerticalAlignment="Top" Width="600">
                 <Button x:Name="btnViewQuery" Content="View query" HorizontalAlignment="Left" Margin="438,10,0,0" VerticalAlignment="Top" Width="75" Click="btnViewQuery_Click"/>
                 <TextBox x:Name="textBoxViewQuery" HorizontalAlignment="Left" Height="68" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="358"/>
+                <Button x:Name="btnExecute" Content="Execute" HorizontalAlignment="Left" Margin="438,38,0,0" VerticalAlignment="Top" Width="75" Click="btnExecute_Click"/>
             </Grid>
         </GroupBox>
-        <GroupBox x:Name="groupBox2" Header="Select result" HorizontalAlignment="Left" Margin="19,379,0,0" VerticalAlignment="Top" Height="249" Width="877">
-            <Grid HorizontalAlignment="Left" Height="239" Margin="0,0,-3,-12.6" VerticalAlignment="Top" Width="867">
-                <DataGrid x:Name="dataGridSelectResult" HorizontalAlignment="Left" VerticalAlignment="Top" Height="211" Width="867"/>
-                <TextBlock x:Name="textBlockTime" HorizontalAlignment="Left" Margin="0,211,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="867"/>
+        <GroupBox x:Name="groupBox2" Header="Select result" Margin="19,379,21,9">
+            <Grid Margin="0,0,-2,-12">
+                <DataGrid x:Name="dataGridSelectResult" Margin="0,10,0,28"/>
+                <TextBlock x:Name="textBlockTime" Margin="0,0,0,12" TextWrapping="Wrap" Text="" VerticalAlignment="Bottom"/>
             </Grid>
         </GroupBox>
-        <Button x:Name="btnExecute" Content="Execute" HorizontalAlignment="Left" Margin="744,65,0,0" VerticalAlignment="Top" Width="75" Click="btnExecute_Click"/>
     </Grid>
 </Window>

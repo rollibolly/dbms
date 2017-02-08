@@ -64,6 +64,12 @@ namespace DBMS.KVManagement
         {            
             database.Delete(key);
         }
+        public void Remove(object keyObj)
+        {
+            DatabaseEntry key = new DatabaseEntry();
+            key.Data = ToByteArray(keyObj);
+            database.Delete(key);
+        }
         public DBMSResult Get(object keyObj)        
         {
             try
@@ -113,6 +119,35 @@ namespace DBMS.KVManagement
             }
             return DBMSResult.SUCCESS(resultSet);
         }
+        public List<KeyValuePair<DatabaseEntry, DatabaseEntry>> GetKV(uint? offset, uint? limit)
+        {
+            BTreeCursor cursor = database.Cursor();
+            int counter = 0;
+            List<KeyValuePair<DatabaseEntry, DatabaseEntry>> resultSet = new List<KeyValuePair<DatabaseEntry, DatabaseEntry>>();
+
+            if (offset.HasValue)
+            {
+                cursor.Move(offset.Value);
+            }
+            if (limit.HasValue)
+            {
+                while (counter < limit.Value && cursor.MoveNext())
+                {
+                    KeyValuePair<DatabaseEntry, DatabaseEntry> row = cursor.Current;
+                    resultSet.Add(row);
+                    counter++;
+                }
+            }
+            else
+            {
+                while (cursor.MoveNext())
+                {
+                    KeyValuePair<DatabaseEntry, DatabaseEntry> row = cursor.Current;
+                    resultSet.Add(row);
+                }
+            }
+            return resultSet;
+        }
         public DBMSResult GetTopN<T>(int n)
         {
             BTreeCursor cursor = database.Cursor();            
@@ -144,7 +179,7 @@ namespace DBMS.KVManagement
             Useful inner functions for data transformation
             Ex: from and to byte[] (Because Berkely DB uses byte[] as his key or value Data) 
         */
-        private byte[] ToByteArray(object obj)
+        public static byte[] ToByteArray(object obj)
         {
             if (obj == null)
                 return null;
@@ -156,7 +191,7 @@ namespace DBMS.KVManagement
             }
         }
 
-        private T FromByteArray<T>(byte[] data)
+        public static T FromByteArray<T>(byte[] data)
         {
             if (data == null)
                 return default(T);
@@ -320,7 +355,8 @@ namespace DBMS.KVManagement
                 case Utilities.CommandType.SELECT:
                     List<string> columnNames = command.Columns.Select(r => r.Name).ToList();
                     Table tblForSelect = dbSchema.Tables.Where(r => r.TableName == command.TableNames[0]).FirstOrDefault();
-                    resultTable = Select(dbSchema, tblForSelect, columnNames, null, null);
+                    resultTable = SelectWhere(dbSchema, tblForSelect, columnNames, command.WhereClauses);
+                    //resultTable = Select(dbSchema, tblForSelect, columnNames, null, null);
                     return 0;
                 case Utilities.CommandType.UPDATE:
                     return 0;
@@ -403,7 +439,7 @@ namespace DBMS.KVManagement
             return false;
         }
 
-        public static List<KeyValuePair<DatabaseEntry, DatabaseEntry>> Where(WhereClause clause, Table tableDef, DatabaseMgr tableMgr, Dictionary<string, DatabaseMgr> indexManagers)
+        public static List<KeyValuePair<DatabaseEntry, DatabaseEntry>> Where(WhereClause clause, Table tableDef, DatabaseMgr tableMgr, Dictionary<string, DatabaseMgr> indexManagers, List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult)
         {
             List<KeyValuePair<DatabaseEntry, DatabaseEntry>> resultRows = new List<KeyValuePair<DatabaseEntry, DatabaseEntry>>();
             List<TableColumn> tableCols = tableDef.Columns.OrderBy(r => r.Order).ToList();
@@ -417,28 +453,80 @@ namespace DBMS.KVManagement
                 if (clause.OpType == Operator.EQ)
                 {
                     row = indexFile.GetKV(clause.RightValue);
-                    resultRows.Add(row);
-                    //indexFile.Close();
+                    
+                    resultRows.Add(tableMgr.database.Get(row.Value));                    
                     return resultRows;
                 }
                 else
                 {
-                    BTreeCursor cursor = indexFile.database.Cursor();                                        
-                    while (cursor.MoveNext())
+                    if (subResult.Count > 0)
                     {
-                        string value = tableMgr.FromByteArray<string>(cursor.Current.Key.Data);
-                        Type type = null;
-                        if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
-                        if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
-                        if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
-                        if (DatabaseMgr.CheckOp(value, clause.RightValue, clause.OpType, type))
+                        BTreeCursor cursor = indexFile.database.Cursor();
+                        while (cursor.MoveNext())
                         {
-                            KeyValuePair<DatabaseEntry,DatabaseEntry> subRes = tableMgr.database.Get(cursor.Current.Value);
-                            resultRows.Add(subRes);
+                            string value = DatabaseMgr.FromByteArray<string>(cursor.Current.Key.Data);
+                            Type type = null;
+                            if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                            if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                            if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                            if (DatabaseMgr.CheckOp(value, clause.RightValue, clause.OpType, type))
+                            {
+                                KeyValuePair<DatabaseEntry, DatabaseEntry> subRes = tableMgr.database.Get(cursor.Current.Value);
+                                foreach (KeyValuePair<DatabaseEntry, DatabaseEntry> item in subResult)
+                                {
+                                    string a = DatabaseMgr.FromByteArray<string>(item.Key.Data);
+                                    string b = DatabaseMgr.FromByteArray<string>(cursor.Current.Value.Data);
+                                    if (a == b)
+                                    {
+                                        resultRows.Add(subRes);
+                                        break;
+                                    }
+                                }                                
+                            }
                         }
+                        cursor.Close();
+
+                        /*
+                        foreach (KeyValuePair<DatabaseEntry, DatabaseEntry> current in subResult)
+                        {
+                            //string indexedColValue = GetColumnValueFrom(tableDef, clause.LeftValue, current);
+                            //KeyValuePair<DatabaseEntry, DatabaseEntry> foundEntry = indexFile.GetKV(indexedColValue);
+                            string value = DatabaseMgr.FromByteArray<string>(current.Key.Data);
+                            Type type = null;
+                            if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                            if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                            if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                            if (DatabaseMgr.CheckOp(value, clause.RightValue, clause.OpType, type))
+                            {
+                                KeyValuePair<DatabaseEntry, DatabaseEntry> subRes = tableMgr.database.Get(current.Value);
+                                if (subResult.Contains(subRes))
+                                {
+                                    resultRows.Add(subRes);
+                                }
+                            }
+                        }*/
                     }
-                    cursor.Close();
+                    else
+                    {
+                        BTreeCursor cursor = indexFile.database.Cursor();
+                        while (cursor.MoveNext())
+                        {
+                            string value = DatabaseMgr.FromByteArray<string>(cursor.Current.Key.Data);
+                            Type type = null;
+                            if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                            if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                            if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                            if (DatabaseMgr.CheckOp(value, clause.RightValue, clause.OpType, type))
+                            {
+                                KeyValuePair<DatabaseEntry, DatabaseEntry> subRes = tableMgr.database.Get(cursor.Current.Value);
+                                resultRows.Add(subRes);
+                            }
+                        }
+                        cursor.Close();
+                    }
+                    
                 }
+                //indexFile.Close();
             }
             else
             {            
@@ -454,62 +542,187 @@ namespace DBMS.KVManagement
                     }
                     else
                     {
-                        BTreeCursor cursor = tableMgr.database.Cursor();
-                        while (cursor.MoveNext())
+                        if (subResult.Count > 0)
                         {
-                            string value = tableMgr.FromByteArray<string>(cursor.Current.Key.Data);
-                            Type type = null;
-                            if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
-                            if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
-                            if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
-                            if (DatabaseMgr.CheckOp(value, clause.RightValue, clause.OpType, type))
-                            {
-                                resultRows.Add(new KeyValuePair<DatabaseEntry, DatabaseEntry>(cursor.Current.Key, cursor.Current.Value));
-                            }
+                            resultRows = SearchNonCursorNonIndexPK(tableMgr, tableCols, column, clause, subResult);                            
                         }
-                        cursor.Close();
+                        else
+                        {
+                            resultRows = SearchCursorNonIndexPK(tableMgr, tableCols, column, clause);                            
+                        }
                     }
                 }
                 else
                 {
-                    BTreeCursor cursor = tableMgr.database.Cursor();
-                    bool hasPk = (tableDef.PrimaryKey != null ? true : false);
-                    while (cursor.MoveNext())
+                    if (subResult.Count > 0)
                     {
-                        string key = tableMgr.FromByteArray<string>(cursor.Current.Key.Data);
-                        string values = tableMgr.FromByteArray<string>(cursor.Current.Value.Data);
-                        string[] rowArray = new string[tableCols.Count];
-                        
-                        string[] valuesArr = values.Split('|');
-                        if (hasPk)
-                        {
-                            rowArray[tableDef.PrimaryKey.Order] = key;
-                            int i = 0;
-                            for (int ind = 0; ind < tableCols.Count; ++ind)
-                            {
-                                if (rowArray[ind] == null)
-                                {
-                                    rowArray[ind] = valuesArr[i];
-                                    i++;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            rowArray = valuesArr;
-                        }
-                        Type type = null;
-                        if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
-                        if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
-                        if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
-                        if (DatabaseMgr.CheckOp(rowArray[column.Order], clause.RightValue, clause.OpType, type))
-                        {
-                            resultRows.Add(new KeyValuePair<DatabaseEntry, DatabaseEntry>(cursor.Current.Key, cursor.Current.Value));
-                        }
+                        resultRows = SearchNonCursorNonIndexNonPK(tableMgr, tableDef, tableCols, column, clause, subResult);
                     }
+                    else
+                    {
+                        resultRows = SearchCursorNonIndexNonPK(tableMgr, tableDef, tableCols, column, clause);
+                    }                    
                 }
             }
             return resultRows;
+        }
+        public static List<KeyValuePair<DatabaseEntry, DatabaseEntry>> SearchCursorNonIndexPK(DatabaseMgr tableMgr, List<TableColumn> tableCols, TableColumn column, WhereClause clause)
+        {
+            List<KeyValuePair<DatabaseEntry, DatabaseEntry>> resultRows = new List<KeyValuePair<DatabaseEntry, DatabaseEntry>>();
+            BTreeCursor cursor = tableMgr.database.Cursor();
+            while (cursor.MoveNext())
+            {
+                string value = DatabaseMgr.FromByteArray<string>(cursor.Current.Key.Data);
+                Type type = null;
+                if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                if (DatabaseMgr.CheckOp(value, clause.RightValue, clause.OpType, type))
+                {
+                    resultRows.Add(new KeyValuePair<DatabaseEntry, DatabaseEntry>(cursor.Current.Key, cursor.Current.Value));
+                }
+            }
+            cursor.Close();
+            return resultRows;
+        }
+        public static List<KeyValuePair<DatabaseEntry, DatabaseEntry>> SearchNonCursorNonIndexPK(DatabaseMgr tableMgr, List<TableColumn> tableCols, TableColumn column, WhereClause clause, List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult)
+        {
+            List<KeyValuePair<DatabaseEntry, DatabaseEntry>> resultRows = new List<KeyValuePair<DatabaseEntry, DatabaseEntry>>();
+            foreach (KeyValuePair<DatabaseEntry,DatabaseEntry> current in subResult)
+            {
+                string value = DatabaseMgr.FromByteArray<string>(current.Key.Data);
+                Type type = null;
+                if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                if (DatabaseMgr.CheckOp(value, clause.RightValue, clause.OpType, type))
+                {
+                    resultRows.Add(new KeyValuePair<DatabaseEntry, DatabaseEntry>(current.Key, current.Value));
+                }
+            }            
+            return resultRows;
+        }
+        public static List<KeyValuePair<DatabaseEntry, DatabaseEntry>> SearchCursorNonIndexNonPK(DatabaseMgr tableMgr, Table tableDef, List<TableColumn> tableCols, TableColumn column, WhereClause clause)
+        {
+            List<KeyValuePair<DatabaseEntry, DatabaseEntry>> resultRows = new List<KeyValuePair<DatabaseEntry, DatabaseEntry>>();
+            BTreeCursor cursor = tableMgr.database.Cursor();
+            bool hasPk = (tableDef.PrimaryKey != null ? true : false);
+            while (cursor.MoveNext())
+            {
+                string key = DatabaseMgr.FromByteArray<string>(cursor.Current.Key.Data);
+                string values = DatabaseMgr.FromByteArray<string>(cursor.Current.Value.Data);
+                string[] rowArray = new string[tableCols.Count];
+
+                string[] valuesArr = values.Split('|');
+                if (hasPk)
+                {
+                    rowArray[tableDef.PrimaryKey.Order] = key;
+                    int i = 0;
+                    for (int ind = 0; ind < tableCols.Count; ++ind)
+                    {
+                        if (rowArray[ind] == null)
+                        {
+                            rowArray[ind] = valuesArr[i];
+                            i++;
+                        }
+                    }
+                }
+                else
+                {
+                    rowArray = valuesArr;
+                }
+                Type type = null;
+                if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                if (DatabaseMgr.CheckOp(rowArray[column.Order], clause.RightValue, clause.OpType, type))
+                {
+                    resultRows.Add(new KeyValuePair<DatabaseEntry, DatabaseEntry>(cursor.Current.Key, cursor.Current.Value));
+                }
+            }
+            cursor.Close();
+            return resultRows;
+        }
+
+        public static List<KeyValuePair<DatabaseEntry, DatabaseEntry>> SearchNonCursorNonIndexNonPK(DatabaseMgr tableMgr, Table tableDef, List<TableColumn> tableCols, TableColumn column, WhereClause clause, List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult)
+        {
+            List<KeyValuePair<DatabaseEntry, DatabaseEntry>> resultRows = new List<KeyValuePair<DatabaseEntry, DatabaseEntry>>();
+            
+            bool hasPk = (tableDef.PrimaryKey != null ? true : false);
+            foreach (KeyValuePair<DatabaseEntry, DatabaseEntry> current in subResult)
+            {
+                string key = DatabaseMgr.FromByteArray<string>(current.Key.Data);
+                string values = DatabaseMgr.FromByteArray<string>(current.Value.Data);
+                string[] rowArray = new string[tableCols.Count];
+
+                string[] valuesArr = values.Split('|');
+                if (hasPk)
+                {
+                    rowArray[tableDef.PrimaryKey.Order] = key;
+                    int i = 0;
+                    for (int ind = 0; ind < tableCols.Count; ++ind)
+                    {
+                        if (rowArray[ind] == null)
+                        {
+                            rowArray[ind] = valuesArr[i];
+                            i++;
+                        }
+                    }
+                }
+                else
+                {
+                    rowArray = valuesArr;
+                }
+                Type type = null;
+                if (column.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
+                if (column.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
+                if (column.DataType == DBMSDataType.STRING) { type = typeof(string); }
+                if (DatabaseMgr.CheckOp(rowArray[column.Order], clause.RightValue, clause.OpType, type))
+                {
+                    resultRows.Add(new KeyValuePair<DatabaseEntry, DatabaseEntry>(current.Key, current.Value));
+                }
+            }            
+            return resultRows;
+        }
+        public static Dictionary<string,string> GetColumnValuesArrayFrom(Table tableDef, KeyValuePair<DatabaseEntry, DatabaseEntry> data)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            int columnsCount = tableDef.Columns.Count;            
+            
+            string key = DatabaseMgr.FromByteArray<string>(data.Key.Data);
+            string values = DatabaseMgr.FromByteArray<string>(data.Value.Data);
+            string[] rowArray = new string[columnsCount];
+
+            string[] valuesArr = values.Split('|');
+            if (tableDef.PrimaryKey != null)
+            {
+                //rowArray[tableDef.PrimaryKey.Order] = key;
+                result.Add(tableDef.PrimaryKey.Name, key);
+                int i = 0;
+                for (int ind = 0; ind < columnsCount; ++ind)
+                {
+                    if (tableDef.PrimaryKey.Order != ind)
+                    //if (rowArray[ind] == null)
+                    {
+                        //rowArray[ind] = valuesArr[i];
+                        result.Add(tableDef.Columns.Where(r => r.Order == ind).First().Name, valuesArr[i]);
+                        i++;
+                    }
+                }
+            }
+            else
+            {
+                foreach (TableColumn item in tableDef.Columns)
+                {
+                    result.Add(item.Name, valuesArr[item.Order]);
+                }
+                //rowArray = valuesArr;
+            }
+            return result;
+        }
+        public static string GetColumnValueFrom(Table tableDef, string column, KeyValuePair<DatabaseEntry, DatabaseEntry> data)
+        {
+            return GetColumnValuesArrayFrom(tableDef, data)[column];            
         }
 
         public static int Delete(DBMSDatabase dbSchema, Table tableSchema, List<WhereClause> clauses, DatabaseMgr prevRes = null)
@@ -546,76 +759,171 @@ namespace DBMS.KVManagement
             {
                 pkName = tableSchema.PrimaryKey.Name;
             }
-
-            // iterating trough Where clauses          
-            KeyValuePair<DatabaseEntry,DatabaseEntry> res;
-            DatabaseMgr tmp = tableMgr;
-            //foreach (WhereClause clause in clauses)
+            List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult = new List<KeyValuePair<DatabaseEntry, DatabaseEntry>>();
             while (clauses.Count > 0)
             {
                 WhereClause clause = clauses.First();
                 clauses.Remove(clause);
-                List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult = DatabaseMgr.Where(clause, tableSchema, tmp, indexManagers);
+                subResult = DatabaseMgr.Where(clause, tableSchema, tableMgr, indexManagers, subResult);
                 if (clauses.Count == 0)
                 {
-                    foreach (KeyValuePair<DatabaseEntry, DatabaseEntry> entry in subResult)
+                    if (indexManagers != null && indexManagers.Count > 0)
                     {
-                        tableMgr.Remove(entry.Key);
-                    }
-                    break;
-                }
-                DatabaseMgr tmpDatabase = new DatabaseMgr(string.Format("{0}.temp.dbms", Guid.NewGuid().ToString()));
-                tmpDatabase.Open();
-                foreach (KeyValuePair<DatabaseEntry,DatabaseEntry> entry in subResult)
-                {
-                    tmpDatabase.database.Put(entry.Key, entry.Value);
-                }
-                tmp.Close();
-                tmp = tmpDatabase;
-                
-
-                Delete(dbSchema, tableSchema, clauses, tmpDatabase);
-
-                // if condition is set on PK
-                if (clause.LeftValue == pkName)
-                {
-                    if (clause.OpType == Operator.EQ)
-                    {
-                        res = tableMgr.GetKV(clause.RightValue);
-                        tableMgr.Remove(res.Key);
+                        foreach (DatabaseMgr indexMgr in indexManagers.Values)
+                        {
+                            indexMgr.Open();
+                        }
+                        foreach (KeyValuePair<DatabaseEntry, DatabaseEntry> entry in subResult)
+                        {
+                            Dictionary<string, string> valuesDict = GetColumnValuesArrayFrom(tableSchema, entry);
+                            foreach (KeyValuePair<string, DatabaseMgr> indexMgr in indexManagers)
+                            {
+                                indexMgr.Value.Remove(valuesDict[indexMgr.Key]);
+                            }
+                            tableMgr.database.Delete(entry.Key);
+                        }
                     }
                     else
                     {
-                        BTreeCursor delCursor = tableMgr.database.Cursor();
-                        Type type = null;
-                        if (pk.DataType == DBMSDataType.INTEGER) { type = typeof(int); }
-                        if (pk.DataType == DBMSDataType.FLOAT) { type = typeof(double); }
-                        if (pk.DataType == DBMSDataType.STRING) { type = typeof(string); }
-                        while (delCursor.MoveNext())
+                        foreach (KeyValuePair<DatabaseEntry, DatabaseEntry> entry in subResult)
                         {
-                            string valueStr = tableMgr.FromByteArray<string>(delCursor.Current.Key.Data);                            
-                            if (DatabaseMgr.CheckOp(valueStr, clause.RightValue, clause.OpType, type))
-                            {
-                                tableMgr.Remove(delCursor.Current.Key);
-                            }                            
+                            tableMgr.database.Delete(entry.Key);
                         }
-                        delCursor.Close();                        
                     }
-                    
-                }
-                else if (indexManagers.ContainsKey(clause.LeftValue))
-                {
-
+                    break;
                 }
             }
-
-            // Closing managers
-            tableMgr.Close();
-            foreach (var item in indexManagers.Values)
+            foreach (DatabaseMgr indexMgr in indexManagers.Values)
             {
-                item.Close();
+                indexMgr.Close();
             }
+            tableMgr.Close();
             return affectedRows;
+        }
+
+        public static DbmsTableResult AddToTableResult(DatabaseEntry keyEntry, DatabaseEntry valueEntry, Table tableSchema, List<string> columns, DbmsTableResult resultTable)
+        {
+            string pkName = null;
+            int pkOrder = 0;
+            if (tableSchema.PrimaryKey != null)
+            {
+                pkName = tableSchema.PrimaryKey.Name;
+                pkOrder = (int)tableSchema.PrimaryKey.Order;
+            }
+            List<string> orderedColumnNames = tableSchema.Columns.OrderBy(r => r.Order).Select(r => r.Name).ToList();            
+                      
+            
+            string key = FromByteArray<string>(keyEntry.Data);
+            string value = FromByteArray<string>(valueEntry.Data);                
+            string[] values = value.Split('|');
+            object[] dataRow = resultTable.NewRow();
+            int index = 0;
+            foreach (string orderedColumn in orderedColumnNames)
+            {
+
+                if (columns.Contains(orderedColumn) || columns.Contains("*"))
+                {
+                    List<int> indexesList = resultTable.IndexesOfHeader(orderedColumn);
+                    if (orderedColumn == pkName)
+                    {
+                        AddToObjectRow(dataRow, indexesList, key);
+                    }
+                    else
+                    {
+                        AddToObjectRow(dataRow, indexesList, values[index]);
+                    }
+                }
+                if (pkName != null && pkName != orderedColumn)
+                {
+                    index++;
+                }
+            }
+            resultTable.Rows.Add(dataRow);
+                        
+            return resultTable;
+        }
+
+        public static DbmsTableResult SelectWhere(DBMSDatabase dbSchema, Table tableSchema, List<string> columns, List<WhereClause> clauses, DatabaseMgr prevRes = null)
+        {
+            DbmsTableResult resultTable = new DbmsTableResult();                        
+            List<string> orderedColumnNames = tableSchema.Columns.OrderBy(r => r.Order).Select(r => r.Name).ToList();
+            foreach (string item in columns)
+            {
+                if (item == "*")
+                {
+                    foreach (string orderedColumn in orderedColumnNames)
+                    {
+                        resultTable.Headers.Add(orderedColumn);
+                    }
+                }
+                else
+                {
+                    resultTable.Headers.Add(item);
+                }
+            }
+            
+            DatabaseMgr tableMgr = new DatabaseMgr(String.Format("{0}\\{1}", dbSchema.FolderName, tableSchema.FileName));
+            tableMgr.Open();
+            // If there are no conditions than burn the whole table
+            if (clauses == null || clauses.Count() == 0)
+            {
+                BTreeCursor cursor = tableMgr.database.Cursor();
+                while (cursor.MoveNext())
+                {
+                    resultTable = AddToTableResult(cursor.Current.Key, cursor.Current.Value, tableSchema, columns, resultTable);
+                }
+                cursor.Close();
+                tableMgr.Close();
+                return resultTable;             
+            }
+
+            // First get all index files for this table
+            List<Index> tableIndexes = dbSchema.Indexes.Where(r => r.RefTable.TableName == tableSchema.TableName).ToList();
+            Dictionary<string, DatabaseMgr> indexManagers = new Dictionary<string, DatabaseMgr>();
+            foreach (Index index in tableIndexes)
+            {
+                indexManagers.Add(index.RefColumn.Name, new DatabaseMgr(String.Format("{0}\\{1}", dbSchema.FolderName, index.Filename)));
+            }
+
+            // Determining PK if any
+            string pkName = null;
+            TableColumn pk = tableSchema.PrimaryKey;
+            if (pk != null)
+            {
+                pkName = tableSchema.PrimaryKey.Name;
+            }
+            List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult = new List<KeyValuePair<DatabaseEntry, DatabaseEntry>>();
+            while (clauses.Count > 0)
+            {
+                WhereClause clause = clauses.First();
+                clauses.Remove(clause);
+                if (clause.ClauseType == WhereType.AND || clause.ClauseType == WhereType.DEFAULT)
+                {
+                    subResult = DatabaseMgr.Where(clause, tableSchema, tableMgr, indexManagers, subResult);
+                }
+                else
+                {
+                    List<KeyValuePair<DatabaseEntry, DatabaseEntry>> orResult = DatabaseMgr.Where(clause, tableSchema, tableMgr, indexManagers, null);
+                    subResult = subResult.Union(orResult).ToList();
+                }
+                
+                if (clauses.Count == 0)
+                {
+                    
+                    foreach (KeyValuePair<DatabaseEntry, DatabaseEntry> entry in subResult)
+                    {
+                    resultTable = AddToTableResult(entry.Key, entry.Value, tableSchema, columns, resultTable);                        
+                    }                    
+                    break;
+                }
+            }
+            foreach (DatabaseMgr indexMgr in indexManagers.Values)
+            {
+                indexMgr.Close();
+            }
+            tableMgr.Close();
+            //return affectedRows;
+            return resultTable;
         }
 
         public static DbmsTableResult Select(DBMSDatabase dbSchema, Table tableSchema, List<string> columns, uint? offset, uint? limit)
@@ -645,10 +953,13 @@ namespace DBMS.KVManagement
                 pkName = tableSchema.PrimaryKey.Name;
                 pkOrder = (int)tableSchema.PrimaryKey.Order;
             }
-            DBMSResult result = mgr.Get<string>(offset, limit);
-            Dictionary<string, string> resultList = result.Data as Dictionary<string, string>;
-            foreach (var row in resultList)
+            List<KeyValuePair<DatabaseEntry, DatabaseEntry>> result = mgr.GetKV(offset, limit);
+            //resultSet.Add(FromByteArray<T>(row.Key.Data), FromByteArray<T>(row.Value.Data));
+            //Dictionary<string, string> resultList = result.Data as Dictionary<string, string>;
+            foreach (var row in result)
             {
+                resultTable = AddToTableResult(row.Key, row.Value, tableSchema, columns, resultTable);
+                /*
                 string key = row.Key;
                 string[] values = row.Value.Split('|');
                 object[] dataRow = resultTable.NewRow();
@@ -674,6 +985,7 @@ namespace DBMS.KVManagement
                     }
                 }
                 resultTable.Rows.Add(dataRow);
+                */
             }
             mgr.Close();
             return resultTable;

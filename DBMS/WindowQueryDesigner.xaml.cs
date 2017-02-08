@@ -260,7 +260,7 @@ namespace DBMS
                 if (resultCommand != null)
                 {
                         MessageBox.Show(resultCommand.ToString());
-                        DatabaseMgr.ExecuteCommand(comboBoxDBs.SelectedItem as DBMSDatabase, resultCommand, out resTable); 
+                        DatabaseMgr.ExecuteCommand(databases.Where(r => r.DatabaseName == comboBoxDBs.SelectedItem as string).First(), resultCommand, out resTable); 
                 }
                 if (resTable != null)
                     FillResultView(resTable);

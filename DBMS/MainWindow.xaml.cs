@@ -20,6 +20,8 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Text.RegularExpressions;
 using DBMS.Models;
+using Microsoft.Win32;
+using System.IO;
 
 namespace DBMS
 {
@@ -450,7 +452,7 @@ namespace DBMS
                 {
                     foreach (UICommand ui in commands)
                     {
-                        MessageBox.Show(ui.ToString());
+                        //MessageBox.Show(ui.ToString());
                         DatabaseMgr.ExecuteCommand(comboBoxSelectedDatabase.SelectedItem as DBMSDatabase, ui, out resTable);
                     }
                 }                
@@ -494,6 +496,15 @@ namespace DBMS
         {
             WindowQueryDesigner window = new WindowQueryDesigner();
             window.Show();
+        }
+
+        private string insertQuery;
+        private void btnLoadInsertScripts_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            if (openFileDialog.ShowDialog() == true)
+                insertQuery = File.ReadAllText(openFileDialog.FileName);
+            ExecuteQueryText(insertQuery);
         }
     }
 }

@@ -362,6 +362,7 @@ namespace DBMS.Utilities
 
         public List<UICommand> InterpretCommand(string sqltext)
         {
+            sqltext.Replace('\n', ' ');
             string[] queries = sqltext.Split(';');
             List<UICommand> commandList = new List<UICommand>();
             foreach (string query in queries)
