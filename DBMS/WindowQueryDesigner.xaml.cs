@@ -1,4 +1,6 @@
-﻿using DBMS.Models.DBStructure;
+﻿using DBMS.KVManagement;
+using DBMS.Models;
+using DBMS.Models.DBStructure;
 using DBMS.Utilities;
 using System;
 using System.Collections.Generic;
@@ -39,6 +41,7 @@ namespace DBMS
             selectedColumns = new ObservableCollection<Models.DBStructure.TableColumn>();
             listBoxSelectedTables.ItemsSource = selectedTables;
             listBoxSelectedColumns.ItemsSource = selectedColumns;
+            resultCommand = new UICommand();
 
             whereClauses = new ObservableCollection<WhereClause>();
             listBoxWhere.ItemsSource = whereClauses;
@@ -221,6 +224,54 @@ namespace DBMS
             {
                 textBoxViewQuery.Text += "\nWHERE ";
                 textBoxViewQuery.Text += String.Join(" ", whereClauses.Select(r => string.Format("{0} {1} {2} {3}", r.ClauseType == WhereType.DEFAULT ? "":r.ClauseType.ToString(), r.LeftValue, r.Operator, r.RightValue)));
+            }
+        }
+
+        private void btnExecute_Click(object sender, RoutedEventArgs e)
+        {
+            resultCommand.Command = CommandType.SELECT;
+            resultCommand.Entity = Utilities.EntityType.TABLE;
+            resultCommand.TableNames = selectedTables.Select(r => r.TableName).ToList();
+            resultCommand.Columns = selectedColumns.ToList();
+            resultCommand.WhereClauses = whereClauses.ToList();
+
+            DateTime start = DateTime.Now;
+            try
+            {
+                DbmsTableResult resTable = null;
+                if (resultCommand != null)
+                {
+                        MessageBox.Show(resultCommand.ToString());
+                        DatabaseMgr.ExecuteCommand(comboBoxDBs.SelectedItem as DBMSDatabase, resultCommand, out resTable); 
+                }
+                if (resTable != null)
+                    FillResultView(resTable);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            TimeSpan ellapsed = DateTime.Now.Subtract(start);
+            textBlockTime.Text = string.Format("Execution duration: {0} ms", ellapsed.Milliseconds);
+        }
+
+        private void FillResultView(DbmsTableResult resTable)
+        {
+            dataGridSelectResult.Items.Clear();
+            dataGridSelectResult.Columns.Clear();
+            int i = 0;
+            foreach (string item in resTable.Headers)
+            {
+                DataGridTextColumn col = new DataGridTextColumn();
+                col.Header = item;
+                col.Binding = new Binding(string.Format("[{0}]", i));
+                dataGridSelectResult.Columns.Add(col);
+                i++;
+            }
+
+            foreach (object[] resRow in resTable.Rows)
+            {
+                dataGridSelectResult.Items.Add(resRow);
             }
         }
     }

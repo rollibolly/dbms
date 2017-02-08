@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DBMS"
         mc:Ignorable="d"
-        Title="Query Designer" Height="460.766" Width="925.424" Loaded="Window_Loaded">
+        Title="Query Designer" Height="667.766" Width="925.424" Loaded="Window_Loaded">
     <Grid>
         <Label x:Name="label" Content="Select database:" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="1.052,1.055" Margin="10,29,0,0"/>
         <ComboBox x:Name="comboBoxDBs" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="125,32,0,0" SelectionChanged="comboBoxTables_SelectionChanged"/>
@@ -97,9 +97,16 @@
                   " HorizontalAlignment="Left" VerticalAlignment="Top" Height="97" Width="270"/>
         <GroupBox x:Name="groupBox1" Header="View select query" HorizontalAlignment="Left" Margin="299,10,0,0" VerticalAlignment="Top" Height="87" Width="610">
             <Grid HorizontalAlignment="Left" Height="68" Margin="0,0,-3.2,-4" VerticalAlignment="Top" Width="600">
-                <Button x:Name="btnViewQuery" Content="View query" HorizontalAlignment="Left" Margin="497,39,0,0" VerticalAlignment="Top" Width="75" Click="btnViewQuery_Click"/>
+                <Button x:Name="btnViewQuery" Content="View query" HorizontalAlignment="Left" Margin="438,10,0,0" VerticalAlignment="Top" Width="75" Click="btnViewQuery_Click"/>
                 <TextBox x:Name="textBoxViewQuery" HorizontalAlignment="Left" Height="68" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="358"/>
             </Grid>
         </GroupBox>
+        <GroupBox x:Name="groupBox2" Header="Select result" HorizontalAlignment="Left" Margin="19,379,0,0" VerticalAlignment="Top" Height="249" Width="877">
+            <Grid HorizontalAlignment="Left" Height="239" Margin="0,0,-3,-12.6" VerticalAlignment="Top" Width="867">
+                <DataGrid x:Name="dataGridSelectResult" HorizontalAlignment="Left" VerticalAlignment="Top" Height="211" Width="867"/>
+                <TextBlock x:Name="textBlockTime" HorizontalAlignment="Left" Margin="0,211,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="867"/>
+            </Grid>
+        </GroupBox>
+        <Button x:Name="btnExecute" Content="Execute" HorizontalAlignment="Left" Margin="744,65,0,0" VerticalAlignment="Top" Width="75" Click="btnExecute_Click"/>
     </Grid>
 </Window>
