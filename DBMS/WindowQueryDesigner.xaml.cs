@@ -156,15 +156,33 @@ namespace DBMS
             WhereClause wc = new WhereClause();
             Models.DBStructure.TableColumn rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn; ;
 
-            if (comboBoxLeftValue.SelectedIndex == -1)
+            if (comboBoxLeftValue.SelectedIndex == -1 || comboBoxOperator.SelectedIndex == -1)
             {
                 MessageBox.Show("First you must select an item from the combos!");
+                return;
             }
             else
-            { 
-                wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).ColumnFullName;
-                wc.OpType = (Operator)Enum.Parse(typeof(Operator),comboBoxOperator.SelectedItem.ToString());
-                rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn;
+            {
+                if (whereClauses.Count() == 0)
+                {
+                    wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).ColumnFullName;
+                    wc.OpType = (Operator)Enum.Parse(typeof(Operator), comboBoxOperator.SelectedItem.ToString());
+                    rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn;
+                }
+                else
+                {
+                    if ((radiobtnAND.IsChecked == false && radiobtnOR.IsChecked == true) || (radiobtnAND.IsChecked == true && radiobtnOR.IsChecked == false))
+                    {
+                        wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).ColumnFullName;
+                        wc.OpType = (Operator)Enum.Parse(typeof(Operator), comboBoxOperator.SelectedItem.ToString());
+                        rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select AND / OR to the where statement!");
+                        return;
+                    }
+                }
             }
 
             if (rightValCol != null)
