@@ -165,7 +165,7 @@ namespace DBMS
             {
                 if (whereClauses.Count() == 0)
                 {
-                    wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).ColumnFullName;
+                    wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).Name;
                     wc.OpType = (Operator)Enum.Parse(typeof(Operator), comboBoxOperator.SelectedItem.ToString());
                     rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn;
                 }
@@ -173,7 +173,7 @@ namespace DBMS
                 {
                     if ((radiobtnAND.IsChecked == false && radiobtnOR.IsChecked == true) || (radiobtnAND.IsChecked == true && radiobtnOR.IsChecked == false))
                     {
-                        wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).ColumnFullName;
+                        wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).Name;
                         wc.OpType = (Operator)Enum.Parse(typeof(Operator), comboBoxOperator.SelectedItem.ToString());
                         rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn;
                     }
