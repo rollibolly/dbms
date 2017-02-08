@@ -90,6 +90,7 @@ namespace DBMS
                 foreach (Models.DBStructure.TableColumn column in selectedTable.Columns)
                 {
                     availableColumns.Add(column);
+
                 }
             }
         }
@@ -158,7 +159,7 @@ namespace DBMS
             else
             { 
                 wc.LeftValue = (comboBoxLeftValue.SelectedItem as Models.DBStructure.TableColumn).ColumnFullName;
-                wc.Operator = comboBoxOperator.SelectedItem.ToString();
+                wc.OpType = (Operator)Enum.Parse(typeof(Operator),comboBoxOperator.SelectedItem.ToString());
                 rightValCol = comboBoxRightValue.SelectedItem as Models.DBStructure.TableColumn;
             }
 
@@ -195,27 +196,15 @@ namespace DBMS
         private void btnViewQuery_Click(object sender, RoutedEventArgs e)
         {
             textBoxViewQuery.Text = "SELECT ";
-
-            foreach (var c in selectedColumns)
-            {
-                textBoxViewQuery.Text += c.ColumnFullName + " ";
-            }
-
+            textBoxViewQuery.Text += String.Join(", ", selectedColumns.Select(r => r.ColumnFullName).ToList());
             textBoxViewQuery.Text += "\nFROM ";
-
-            foreach (var t in selectedTables)
-            {
-                textBoxViewQuery.Text += t.TableName + " ";
-            }
-
-            if (whereClauses != null)
+            textBoxViewQuery.Text += String.Join(",", selectedTables.Select(r => r.TableName).ToList());
+            
+            if (whereClauses.Count != 0)
             {
                 textBoxViewQuery.Text += "\nWHERE ";
-
-                foreach (var w in whereClauses)
-                {
-                    textBoxViewQuery.Text += w.LeftValue + " " + w.Operator + " " + w.RightValue + "\n";
-                }
+                //textBoxViewQuery.Text += String.Join(", ", whereClauses.Select(r => new {r.LeftValue, r.Operator, r.RightValue}));
+                textBoxViewQuery.Text += String.Join(" and ", whereClauses.Select(r => string.Format("{0} {1} {2}", r.LeftValue, r.Operator, r.RightValue)));
             }
         }
     }

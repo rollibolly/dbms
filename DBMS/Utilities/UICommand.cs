@@ -30,7 +30,27 @@ namespace DBMS.Utilities
         private string op;
         public string Operator
         {
-            get { return this.op; }
+            get
+            {
+                switch (OpType)
+                {
+                    case DBMS.Operator.EQ:
+                        return "=";
+                        
+                    case DBMS.Operator.LT:
+                        return "<";
+                    case DBMS.Operator.GT:
+                        return ">";
+                    case DBMS.Operator.LE:
+                        return "<=";
+                    case DBMS.Operator.GE:
+                        return ">=";
+                    case DBMS.Operator.NE:
+                        return "<>";
+                    default:
+                        return "X";                        
+                }                
+            }
             set
             {
                 op = value;
@@ -58,9 +78,40 @@ namespace DBMS.Utilities
             }
         } // =|<>|<|>|<=|>=
         public string RightValue { get; set; }
+        private Operator opType;
         public Operator OpType
         {
-            get;set;
+            get
+            {
+                return this.opType;
+            }
+            set
+            {
+                opType = value;
+                switch (opType)
+                {
+                    case DBMS.Operator.EQ:
+                        op = "=";
+                        break;
+                    case DBMS.Operator.LT:
+                        op = "<";
+                        break;
+                    case DBMS.Operator.GT:
+                        op = ">";
+                        break;
+                    case DBMS.Operator.LE:
+                        op = "<=";
+                        break;
+                    case DBMS.Operator.GE:
+                        op = ">=";
+                        break;
+                    case DBMS.Operator.NE:
+                        op = "<>";
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
         public bool IsColumnRight
         {
