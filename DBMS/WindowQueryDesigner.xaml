@@ -72,6 +72,8 @@
                 <TextBox x:Name="textBoxValue" HorizontalAlignment="Left" Height="23" Margin="88,111,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120" TextChanged="textBoxValue_TextChanged"/>
                 <Label x:Name="label8" Content="or" HorizontalAlignment="Left" Margin="30,108,0,0" VerticalAlignment="Top"/>
                 <Button x:Name="btnAdd" Content="Add" HorizontalAlignment="Left" Margin="234,114,0,0" VerticalAlignment="Top" Width="48" Click="btnAdd_Click"/>
+                <RadioButton x:Name="radiobtnAND" Content="AND" HorizontalAlignment="Left" Margin="234,59,0,0" VerticalAlignment="Top" Width="48"/>
+                <RadioButton x:Name="radiobtnOR" Content="OR" HorizontalAlignment="Left" Margin="234,81,0,0" VerticalAlignment="Top"/>
 
             </Grid>
         </GroupBox>

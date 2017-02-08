@@ -145,7 +145,8 @@ namespace DBMS.Utilities
             command.Success = true;
             command.Command = CommandType.SELECT;
 
-            var reg = new Regex(@"select (.*) from ([a-z0-9]+,? ?[a-z0-9]+?,? ?[a-z0-9]+?,? ?) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)?");
+            //var reg = new Regex(@"select (.*) from ([a-z0-9]+,? ?[a-z0-9]+?,? ?[a-z0-9]+?,? ?) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)? ?(and|or)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)?");
+            var reg = new Regex(@"select (.*) from ([a-z0-9]+) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)? ?(and|or)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)?");
             var colunms = reg.Match(sql).Groups[1].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             var tables = reg.Match(sql).Groups[2].Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             
@@ -166,9 +167,13 @@ namespace DBMS.Utilities
                 string[] stringSeparators = new string[] { "\r" };
                 command.TableNames.Add(tablename.Split(stringSeparators, StringSplitOptions.None).FirstOrDefault().ToString().Trim());
             }
-            
+
+            string s = reg.Match(sql).Groups[3].ToString();
+
             if (reg.Match(sql).Groups[3].ToString() == "where")
             {
+                command.WhereClauses = new List<WhereClause>();
+
                 if (reg.Match(sql).Groups[4].ToString() == "" || reg.Match(sql).Groups[5].ToString() == "" || reg.Match(sql).Groups[6].ToString() == "")
                 {
                     command.Success = false;
@@ -177,11 +182,34 @@ namespace DBMS.Utilities
                 else
                 {
                     command.Success = true;
-                    command.WhereClauses = new List<WhereClause>();
                     WhereClause wc = new WhereClause();
+                    wc.ClauseType = WhereType.DEFAULT;
                     wc.LeftValue = reg.Match(sql).Groups[4].ToString().Trim();
                     wc.Operator = reg.Match(sql).Groups[5].ToString().Trim();
                     wc.RightValue = reg.Match(sql).Groups[6].ToString().Trim();
+                    command.WhereClauses.Add(wc);
+                }
+
+                if (reg.Match(sql).Groups[7].ToString() != "")
+                {
+                    command.Success = true;
+                    WhereClause wc = new WhereClause();
+                    wc.LeftValue = reg.Match(sql).Groups[8].ToString().Trim();
+                    wc.Operator = reg.Match(sql).Groups[9].ToString().Trim();
+                    wc.RightValue = reg.Match(sql).Groups[10].ToString().Trim();
+
+                    switch (reg.Match(sql).Groups[7].ToString().Trim())
+                    {
+                        case "and":
+                            wc.ClauseType = WhereType.AND;
+                            break;
+                        case "or":
+                            wc.ClauseType = WhereType.OR;
+                            break;
+                        default:
+                            wc.ClauseType = WhereType.DEFAULT;
+                            break;
+                    }
                     command.WhereClauses.Add(wc);
                 }
             }
@@ -276,7 +304,8 @@ namespace DBMS.Utilities
             command.Entity = EntityType.TABLE;
 
             sqltext = sqltext.ToLower();
-            string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)?";
+            //string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)?");
+            string pattern = @"delete from ([a-z0-9]+) ?(where)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)? ?(and|or)? ?([a-z0-9]+)? ?(=|<>|<=|>=|<|>)? ?('?[a-z0-9]+.?[0-9]?'?)?";
             Match m = Regex.Match(sqltext, pattern, RegexOptions.Singleline);
 
             command.Success = true;
@@ -285,6 +314,8 @@ namespace DBMS.Utilities
 
             if (m.Groups[2].ToString() == "where")
             {
+                command.WhereClauses = new List<WhereClause>();
+
                 if (m.Groups[3].ToString() == "" || m.Groups[4].ToString() == "" || m.Groups[5].ToString() == "")
                 {
                     command.Success = false;
@@ -293,15 +324,39 @@ namespace DBMS.Utilities
                 else
                 {
                     command.Success = true;
-                    command.WhereClauses = new List<WhereClause>();
                     WhereClause wc = new WhereClause();
                     wc.LeftValue = m.Groups[3].ToString();
                     wc.Operator = m.Groups[4].ToString();
                     wc.RightValue = m.Groups[5].ToString();
+                    wc.ClauseType = WhereType.DEFAULT;
                     command.WhereClauses.Add(wc);
                 }
+
+                if (m.Groups[6].ToString() != "")
+                {
+                    command.Success = true;
+                    WhereClause wc = new WhereClause();
+                    wc.LeftValue = m.Groups[7].ToString().Trim();
+                    wc.Operator = m.Groups[8].ToString().Trim();
+                    wc.RightValue = m.Groups[9].ToString().Trim();
+
+                    switch (m.Groups[6].ToString().Trim())
+                    {
+                        case "and":
+                            wc.ClauseType = WhereType.AND;
+                            break;
+                        case "or":
+                            wc.ClauseType = WhereType.OR;
+                            break;
+                        default:
+                            wc.ClauseType = WhereType.DEFAULT;
+                            break;
+                    }
+                    command.WhereClauses.Add(wc);
+                }
+
             }
-            
+
             return command;
         }
 

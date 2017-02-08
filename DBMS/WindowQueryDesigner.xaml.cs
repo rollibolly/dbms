@@ -30,6 +30,7 @@ namespace DBMS
         ObservableCollection<Models.DBStructure.TableColumn> selectedColumns;
 
         private ObservableCollection<WhereClause> whereClauses;
+        public UICommand resultCommand;
 
         public WindowQueryDesigner()
         {
@@ -171,6 +172,22 @@ namespace DBMS
             {
                 wc.RightValue = textBoxValue.Text;
             }
+
+            if (radiobtnAND.IsChecked == true)
+            {
+                wc.ClauseType = WhereType.AND;
+            }
+            else
+            {
+                if (radiobtnOR.IsChecked == true)
+                {
+                    wc.ClauseType = WhereType.OR;
+                }
+                else
+                {
+                    wc.ClauseType = WhereType.DEFAULT;
+                }
+            }
             
             whereClauses.Add(wc);
 
@@ -196,15 +213,14 @@ namespace DBMS
         private void btnViewQuery_Click(object sender, RoutedEventArgs e)
         {
             textBoxViewQuery.Text = "SELECT ";
-            textBoxViewQuery.Text += String.Join(", ", selectedColumns.Select(r => r.ColumnFullName).ToList());
+            textBoxViewQuery.Text += String.Join(", ", selectedColumns.Select(r => r.ColumnFullName));
             textBoxViewQuery.Text += "\nFROM ";
-            textBoxViewQuery.Text += String.Join(",", selectedTables.Select(r => r.TableName).ToList());
+            textBoxViewQuery.Text += String.Join(",", selectedTables.Select(r => r.TableName));
             
             if (whereClauses.Count != 0)
             {
                 textBoxViewQuery.Text += "\nWHERE ";
-                //textBoxViewQuery.Text += String.Join(", ", whereClauses.Select(r => new {r.LeftValue, r.Operator, r.RightValue}));
-                textBoxViewQuery.Text += String.Join(" and ", whereClauses.Select(r => string.Format("{0} {1} {2}", r.LeftValue, r.Operator, r.RightValue)));
+                textBoxViewQuery.Text += String.Join(" ", whereClauses.Select(r => string.Format("{0} {1} {2} {3}", r.ClauseType == WhereType.DEFAULT ? "":r.ClauseType.ToString(), r.LeftValue, r.Operator, r.RightValue)));
             }
         }
     }
