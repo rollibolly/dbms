@@ -549,17 +549,31 @@ namespace DBMS.KVManagement
 
             // iterating trough Where clauses          
             KeyValuePair<DatabaseEntry,DatabaseEntry> res;
-            DatabaseMgr tmpDatabase = new DatabaseMgr(string.Format("{0}.temp.dbms", Guid.NewGuid().ToString()));
-            tmpDatabase.Open();
-            foreach (WhereClause clause in clauses)
+            DatabaseMgr tmp = tableMgr;
+            //foreach (WhereClause clause in clauses)
+            while (clauses.Count > 0)
             {
-                List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult = DatabaseMgr.Where(clause, tableSchema, tableMgr, indexManagers);                                
+                WhereClause clause = clauses.First();
+                clauses.Remove(clause);
+                List<KeyValuePair<DatabaseEntry, DatabaseEntry>> subResult = DatabaseMgr.Where(clause, tableSchema, tmp, indexManagers);
+                if (clauses.Count == 0)
+                {
+                    foreach (KeyValuePair<DatabaseEntry, DatabaseEntry> entry in subResult)
+                    {
+                        tableMgr.Remove(entry.Key);
+                    }
+                    break;
+                }
+                DatabaseMgr tmpDatabase = new DatabaseMgr(string.Format("{0}.temp.dbms", Guid.NewGuid().ToString()));
+                tmpDatabase.Open();
                 foreach (KeyValuePair<DatabaseEntry,DatabaseEntry> entry in subResult)
                 {
                     tmpDatabase.database.Put(entry.Key, entry.Value);
                 }
-                tableMgr.Close();
-                clauses.Remove(clause);
+                tmp.Close();
+                tmp = tmpDatabase;
+                
+
                 Delete(dbSchema, tableSchema, clauses, tmpDatabase);
 
                 // if condition is set on PK

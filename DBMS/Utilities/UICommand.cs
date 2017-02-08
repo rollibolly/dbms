@@ -26,7 +26,8 @@ namespace DBMS.Utilities
     public enum WhereType
     {
         OR,
-        AND
+        AND,
+        DEFAULT
     }
     public class WhereClause
     {
